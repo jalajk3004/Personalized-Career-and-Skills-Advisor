@@ -1,5 +1,6 @@
 // import { useState } from 'react'
 
+import Navbar from './components/navbar.tsx'
 import RootLayout from './layout/RootLayout.tsx'
 import Auth from './pages/Auth.tsx'
 import {  Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
@@ -16,7 +17,7 @@ function App() {
   return (
     <div>
       <RouterProvider router={(router)}/>
-      wassup
+      <Navbar/>
     </div>
   )
 }

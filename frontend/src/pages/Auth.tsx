@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { auth, googleProvider } from "@/config/firebase";
+import { useEffect, useState } from "react";
+import { auth, googleProvider,db } from "@/config/firebase";
 import { createUserWithEmailAndPassword, signInWithPopup,  } from "firebase/auth";
 import {
   Card,
@@ -12,15 +12,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
+import { doc, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+    
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (user.uid) {
+        const docRef = doc(db, "users", user.uid);
+        await setDoc(docRef, {
+          email: user.email,
+          profilePicture: user.photoURL,
+          name: user.displayName || null,
+        });
+      }
+
+      navigate("/");
     } catch (err) {
       console.log(err);
     }
@@ -28,7 +45,19 @@ const Auth = () => {
 
   const SignInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      if (user.uid) {
+        const docRef = doc(db, "users", user.uid);
+        await setDoc(docRef, {
+          email: user.email,
+          profilePicture: user.photoURL,
+          name: user.displayName,
+        });
+      }
+
+      navigate("/"); 
     } catch (err) {
       console.log(err);
     }
