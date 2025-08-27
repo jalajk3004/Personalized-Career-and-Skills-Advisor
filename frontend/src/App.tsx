@@ -1,24 +1,25 @@
-// import { useState } from 'react'
-
-import Navbar from './components/navbar.tsx'
+import { AuthProvider } from './AuthContext.tsx'
 import RootLayout from './layout/RootLayout.tsx'
 import Auth from './pages/Auth.tsx'
-import {  Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
+import CareerPage from './pages/CareerPage.tsx'
+import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
+import HomePage from './pages/HomePage .tsx'
 
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path='/' element={<RootLayout/>}>
+        <Route index element={<HomePage />} /> 
         <Route path='/auth' element={<Auth/>}/>
+        <Route path="/career" element={<CareerPage />} />
       </Route>
     )
   )
 
   return (
-    <div>
-      <RouterProvider router={(router)}/>
-      <Navbar/>
-    </div>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   )
 }
 

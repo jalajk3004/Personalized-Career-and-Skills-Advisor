@@ -1,20 +1,17 @@
-import React, { useEffect, useState } from "react";
+
 import { auth } from "@/config/firebase";
+import { useAuth } from "@/AuthContext";
 
 
 const Navbar = () => {
-  const [user, setUser] = useState<any>(null);
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-        setUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
+  const { user, loading } = useAuth();
+
+  if (loading) return <p>Loading...</p>;
 
   const handlesingout = async () => {
     try {
       await auth.signOut();
-      setUser(null);
+      
 
     } catch (error) {
       console.error("Error signing out:", error);
