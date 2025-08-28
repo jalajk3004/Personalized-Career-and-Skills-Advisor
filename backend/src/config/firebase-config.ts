@@ -8,7 +8,7 @@ dotenv.config();
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCxY6lyiIsoP6iFXXN-0EfHXPmqO98V7Z8",
+  apiKey: process.env.FIREBASE_API_KEY,
   authDomain: "careersupport-33838.firebaseapp.com",
   projectId: "careersupport-33838",
   storageBucket: "careersupport-33838.firebasestorage.app",
