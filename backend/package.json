@@ -14,14 +14,22 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "firebase": "^12.1.0"
+    "firebase": "^12.1.0",
+    "firebase-admin": "^13.5.0",
+    "joi": "^18.0.1",
+    "pg": "^8.16.3",
+    "pkg": "^5.8.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/pg": "^8.15.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   }
