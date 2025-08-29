@@ -3,8 +3,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
-import pool from "./services/dbServices.js";
 import userRouter  from "./Routes/userRoutes.js";
+import careerRouter  from "./Routes/careerRoutes.js";
+import pool from "./services/dbServices.js";
 
 
 const app = express();
@@ -24,6 +25,7 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/api/users", userRouter );
+app.use("/api/career-recommendations", careerRouter );
 
 
 const PORT = process.env.PORT || 5000;

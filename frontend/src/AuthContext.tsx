@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (currentUser) {
         const idToken = await currentUser.getIdToken();
+        console.log("ID Token:", idToken);
         setToken(idToken);
       } else {
         setToken(null);

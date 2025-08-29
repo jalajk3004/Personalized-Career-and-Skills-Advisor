@@ -1,112 +1,130 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from "../services/dbServices";
+import { authenticate } from "../middleware/Authenticate";
 dotenv.config();
 
+// Define AuthenticatedRequest interface if not already defined elsewhere
+interface AuthenticatedRequest extends Request {
+  user?: { uid: string };
+}
 
-const app = express();
-app.use(cors({ origin: true }));
-app.use(express.json());
 
-// ------------------ Routes ------------------
+const router = express();
+router.use(cors({ origin: true }));
+router.use(express.json());
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("Server is running 🚀");
-});
 
 // 1️⃣ Get all career recommendations for a user
-app.get("/api/users/:uid/career-recommendations", async (req, res) => {
-  const { uid } = req.params;
+router.get("/", authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
+    const { uid } = req.user!;
+    const userRes = await pool.query("SELECT user_id FROM users WHERE uid=$1", [uid]);
     if (userRes.rows.length === 0) return res.status(404).json({ message: "User not found" });
 
-    const userId = userRes.rows[0].user_id;
     const recsRes = await pool.query(
-      "SELECT * FROM career_recommendations WHERE user_id = $1 ORDER BY created_at DESC",
-      [userId]
+      "SELECT * FROM career_recommendations WHERE user_id=$1 ORDER BY created_at DESC",
+      [userRes.rows[0].user_id]
     );
 
     res.json(recsRes.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch career recommendations" });
+    res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
 
-// 2️⃣ Get a single career recommendation for a user
-app.get("/api/users/:uid/career-recommendations/:recId", async (req, res) => {
-  const { uid, recId } = req.params;
+
+router.get("/:recId", authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
+    const { uid } = req.user!;
+    const { recId } = req.params;
+
+    const userRes = await pool.query("SELECT user_id FROM users WHERE uid=$1", [uid]);
     if (userRes.rows.length === 0) return res.status(404).json({ message: "User not found" });
 
-    const userId = userRes.rows[0].user_id;
     const recRes = await pool.query(
-      "SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2",
-      [recId, userId]
+      "SELECT * FROM career_recommendations WHERE recommendation_id=$1 AND user_id=$2",
+      [recId, userRes.rows[0].user_id]
     );
 
     if (recRes.rows.length === 0) return res.status(404).json({ message: "Recommendation not found" });
-
     res.json(recRes.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch career recommendation" });
+    res.status(500).json({ error: "Failed to fetch recommendation" });
   }
 });
 
-// 3️⃣ Create a new career recommendation
-app.post("/api/users/:uid/career-recommendations", async (req, res) => {
-  const { uid } = req.params;
-  const form = req.body;
+
+
+router.post("/", authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  const { uid } = req.user!; // Get UID from token
+  const {
+    name,
+    age,
+    highschool_name,
+    highschool_stream,
+    college,
+    course_type,
+    course,
+    specialisation,
+    no_experience,
+    job_title,
+    company_name,
+    duration,
+    skills,
+    interests,
+    preferred_work_env
+  } = req.body;
 
   try {
-    const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
-    if (userRes.rows.length === 0) return res.status(404).json({ message: "User not found" });
+    // Get user_id from users table
+    const userRes = await pool.query(
+      "SELECT user_id FROM users WHERE uid = $1",
+      [uid]
+    );
 
-    const userId = userRes.rows[0].user_id;
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const insertQuery = `
-      INSERT INTO career_recommendations
-      (user_id, highschool_name, highschool_stream, college, course_type, course, specialisation,
-       no_experience, job_title, company_name, duration, key_skills, interests, preferred_work_env, skills_possess, recommendations)
-      VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-      RETURNING *
-    `;
+    const user_id = userRes.rows[0].user_id;
 
-    const values = [
-      userId,
-      form.highschoolName,
-      form.highschoolStream,
-      form.college,
-      form.courseType,
-      form.course,
-      form.specialisation,
-      form.noExperience,
-      form.jobTitle,
-      form.companyName,
-      form.duration,
-      form.keySkills,
-      form.interests,
-      form.preferredWorkEnv,
-      form.skillsPossess,
-      form.recommendations, // array of recommended careers
-    ];
+    // Insert form data
+    const insertRes = await pool.query(
+      `INSERT INTO career_recommendations (
+        user_id, name, age, highschool_name, highschool_stream, 
+        college, course_type, course, specialisation, no_experience,
+        job_title, company_name, duration, skills, interests,
+        preferred_work_env
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15,
+        $16
+      )
+      RETURNING recommendation_id`,
+      [
+        user_id, name, age, highschool_name, highschool_stream,
+        college, course_type, course, specialisation, no_experience,
+        job_title, company_name, duration, skills, interests,
+        preferred_work_env
+      ]
+    );
 
-    const result = await pool.query(insertQuery, values);
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "Career recommendation saved successfully 🚀",
+      recommendation_id: insertRes.rows[0].recommendation_id
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to submit career recommendation" });
+    console.error("Error saving recommendation:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-// ------------------ Server ------------------
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+
+export default router;
+

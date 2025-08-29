@@ -11,9 +11,55 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getAuth } from "firebase/auth";
 
 const CareerForm = () => {
   const [noExperience, setNoExperience] = useState(false);
+  const [formData, setFormData] = useState({
+  name: "",
+  age: "",
+  highschool_name: "",
+  highschool_stream: "",
+  college: "",
+  course_type: "",
+  course: "",
+  specialisation: "",
+  no_experience: false,
+  job_title: "",
+  company_name: "",
+  duration: "",
+  skills: "",
+  interests: "",
+  preferred_work_env: ""
+});
+
+const handleSubmit = async () => {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not logged in");
+
+    const idToken = await user.getIdToken(); 
+
+    const res = await fetch("http://localhost:5000/api/career-recommendations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to submit form");
+
+    alert(`Form submitted! Recommendation ID: ${data.recommendation_id}`);
+    // Optionally redirect to recommendation page:
+    // router.push(`/career-recommendations/${data.recommendation_id}`);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -28,11 +74,17 @@ const CareerForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Name</Label>
-              <Input placeholder="Enter your full name" />
+              <Input 
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter your full name" />
             </div>
             <div>
               <Label>Age</Label>
-              <Input type="number" placeholder="Enter your age" />
+              <Input type="number" 
+              value={formData.age}
+              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              placeholder="Enter your age" />
             </div>
           </div>
 
@@ -45,11 +97,14 @@ const CareerForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Highschool Name</Label>
-              <Input placeholder="Enter highschool name" />
+              <Input placeholder="Enter highschool name"
+              value={formData.highschool_name}
+              onChange={(e) => setFormData({ ...formData, highschool_name: e.target.value })}
+              />
             </div>
             <div>
               <Label>Highschool Stream</Label>
-              <Select>
+              <Select onValueChange={(value) => setFormData({ ...formData, highschool_stream: value })}>
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select stream" />
                 </SelectTrigger>
@@ -62,11 +117,14 @@ const CareerForm = () => {
             </div>
             <div>
               <Label>College/University</Label>
-              <Input placeholder="Enter institution name" />
+              <Input placeholder="Enter institution name" 
+              value={formData.college}
+              onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+              />
             </div>
             <div>
               <Label>Course Type</Label>
-              <Select>
+              <Select onValueChange={(value) => setFormData({ ...formData, course_type: value })}>
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -75,34 +133,23 @@ const CareerForm = () => {
                   <SelectItem value="pg">PG</SelectItem>
                   <SelectItem value="diploma">Diploma</SelectItem>
                   <SelectItem value="masters">Masters</SelectItem>
+                  <SelectItem value="masters">Ph.d.</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Course</Label>
-              <Select>
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder="Select course" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bcom">B.Com</SelectItem>
-                  <SelectItem value="bsc">B.Sc</SelectItem>
-                  <SelectItem value="btech">B.Tech</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input placeholder="Enter Course name"
+              value={formData.course}
+              onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+              />
             </div>
             <div>
               <Label>Specialisation</Label>
-              <Select>
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder="Select specialization" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cse">Computer Science</SelectItem>
-                  <SelectItem value="ece">ECE</SelectItem>
-                  <SelectItem value="mech">Mechanical</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input placeholder="Enter Specialisation" 
+              value={formData.specialisation}
+              onChange={(e) => setFormData({ ...formData, specialisation: e.target.value })}
+              />
             </div>
           </div>
 
@@ -116,8 +163,8 @@ const CareerForm = () => {
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="noExp"
-                checked={noExperience}
-                onCheckedChange={(checked) => setNoExperience(!!checked)}
+                checked={formData.no_experience}
+                onCheckedChange={(checked) => setFormData({ ...formData, no_experience: !!checked })}
               />
               <Label htmlFor="noExp">No Work Experience</Label>
             </div>
@@ -125,19 +172,24 @@ const CareerForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label>Job Title</Label>
-                  <Input placeholder="Enter job title" />
+                  <Input placeholder="Enter job title"
+                  value={formData.job_title}
+                  onChange={(e) => setFormData({ ...formData, job_title: e.target.value })} 
+                  />
                 </div>
                 <div>
                   <Label>Company Name</Label>
-                  <Input placeholder="Enter company name" />
+                  <Input placeholder="Enter company name" 
+                  value={formData.company_name}
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>Duration</Label>
-                  <Input placeholder="e.g. 2 years" />
-                </div>
-                <div>
-                  <Label>Key Skills</Label>
-                  <Input placeholder="e.g. React, SQL, Marketing" />
+                  <Input placeholder="e.g. 2 years" 
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  />
                 </div>
               </div>
             )}
@@ -152,11 +204,14 @@ const CareerForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Interests</Label>
-              <Input placeholder="e.g. AI, Finance, Design" />
+              <Input placeholder="e.g. AI, Finance, Design"
+              value={formData.interests}
+              onChange={(e) => setFormData({ ...formData, interests: e.target.value })}
+              />
             </div>
             <div>
               <Label>Preferred Work Environment</Label>
-              <Select>
+              <Select onValueChange={(value) => setFormData({ ...formData, preferred_work_env: value })}>
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select preference" />
                 </SelectTrigger>
@@ -169,13 +224,16 @@ const CareerForm = () => {
             </div>
             <div className="col-span-2">
               <Label>Skills You Possess</Label>
-              <Input placeholder="e.g. Java, Communication, Leadership" />
+              <Input placeholder="e.g. Java, Communication, Leadership"
+              value={formData.skills}
+              onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+              />
             </div>
           </div>
 
           {/* Submit */}
           <div className="flex justify-end pt-6">
-            <Button className="px-6 py-2 text-lg">Submit</Button>
+            <Button className="px-6 py-2 text-lg" onClick={handleSubmit}>Submit</Button>
           </div>
         </CardContent>
       </Card>
