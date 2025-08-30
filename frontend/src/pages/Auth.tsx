@@ -1,5 +1,5 @@
 import {  useState } from "react";
-import { auth, googleProvider,db } from "@/config/firebase";
+import { auth, googleProvider, db } from "../config/firebase";
 import { createUserWithEmailAndPassword, signInWithPopup,  } from "firebase/auth";
 import {
   Card,
@@ -49,12 +49,14 @@ const Auth = () => {
       const user = result.user;
 
       if (user.uid) {
-        const docRef = doc(db, "users", user.uid);
-        await setDoc(docRef, {
-          email: user.email,
-          profilePicture: user.photoURL,
-          name: user.displayName,
-        });
+        const token = await user.getIdToken();
+        await fetch("http://localhost:5000/api/users/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+        
       }
 
       navigate("/"); 

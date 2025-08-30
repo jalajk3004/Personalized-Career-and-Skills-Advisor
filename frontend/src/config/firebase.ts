@@ -1,12 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth"
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-
-
+// Firebase configuration for frontend (client-side)
 const firebaseConfig = {
-  apiKey: "AIzaSyCxY6lyiIsoP6iFXXN-0EfHXPmqO98V7Z8",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "careersupport-33838.firebaseapp.com",
   projectId: "careersupport-33838",
   storageBucket: "careersupport-33838.firebasestorage.app",
@@ -18,5 +17,5 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export const googleProvider = new GoogleAuthProvider();

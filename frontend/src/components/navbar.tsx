@@ -1,5 +1,5 @@
 
-import { auth } from "@/config/firebase";
+import { auth } from "../config/firebase";
 import { useAuth } from "@/AuthContext";
 
 

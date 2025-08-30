@@ -4,6 +4,7 @@ import Auth from './pages/Auth.tsx'
 import CareerPage from './pages/CareerPage.tsx'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import HomePage from './pages/HomePage .tsx'
+import CareerOption from './components/careerOption.tsx'
 
 function App() {
   const router = createBrowserRouter(
@@ -12,6 +13,7 @@ function App() {
         <Route index element={<HomePage />} /> 
         <Route path='/auth' element={<Auth/>}/>
         <Route path="/career" element={<CareerPage />} />
+        <Route path="/career/:userId/:recommendationId" element={<CareerOption />} />
       </Route>
     )
   )

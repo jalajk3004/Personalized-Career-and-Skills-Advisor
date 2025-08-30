@@ -52,16 +52,20 @@ const handleSubmit = async () => {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to submit form");
-
-    alert(`Form submitted! Recommendation ID: ${data.recommendation_id}`);
-    // Optionally redirect to recommendation page:
-    // router.push(`/career-recommendations/${data.recommendation_id}`);
+    window.location.href = `/career/${data.user_id}/${data.recommendation_id}`;
+    console.log("Form submitted successfully:", data);
+    
+    
   } catch (err) {
     console.error(err);
   }
 };
 
   return (
+    <>
+    <div className="flex min-h-screen">
+  
+  <main className="flex-1 p-6 bg-gray-50 overflow-hidden">
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-3xl shadow-lg rounded-2xl p-8">
         <CardHeader>
@@ -165,7 +169,7 @@ const handleSubmit = async () => {
                 id="noExp"
                 checked={formData.no_experience}
                 onCheckedChange={(checked) => setFormData({ ...formData, no_experience: !!checked })}
-              />
+                />
               <Label htmlFor="noExp">No Work Experience</Label>
             </div>
             {!noExperience && (
@@ -233,11 +237,17 @@ const handleSubmit = async () => {
 
           {/* Submit */}
           <div className="flex justify-end pt-6">
+            
             <Button className="px-6 py-2 text-lg" onClick={handleSubmit}>Submit</Button>
+            
           </div>
         </CardContent>
       </Card>
     </div>
+  </main>
+</div>
+    
+              </>
   );
 };
 
