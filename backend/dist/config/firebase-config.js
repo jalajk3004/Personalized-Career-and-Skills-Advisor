@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.vapidKey = exports.db = exports.auth = void 0;
+exports.vapidKey = exports.googleProvider = exports.db = exports.auth = void 0;
 // Import the functions you need from the SDKs you need
 const app_1 = require("firebase/app");
 const auth_1 = require("firebase/auth");
@@ -23,4 +23,5 @@ const firebaseConfig = {
 const app = (0, app_1.initializeApp)(firebaseConfig);
 exports.auth = (0, auth_1.getAuth)(app);
 exports.db = (0, firestore_1.getFirestore)(app);
+exports.googleProvider = new auth_1.GoogleAuthProvider();
 exports.vapidKey = process.env.FIREBASE_VAPID_KEY || "";

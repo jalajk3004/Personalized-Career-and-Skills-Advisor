@@ -5,6 +5,7 @@ import CareerPage from './pages/CareerPage.tsx'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import HomePage from './pages/HomePage .tsx'
 import CareerOption from './components/careerOption.tsx'
+import { SidebarProvider } from './context/SidebarContext.tsx'
 
 function App() {
   const router = createBrowserRouter(
@@ -20,7 +21,9 @@ function App() {
 
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <SidebarProvider>
+        <RouterProvider router={router} />
+      </SidebarProvider>
     </AuthProvider>
   )
 }

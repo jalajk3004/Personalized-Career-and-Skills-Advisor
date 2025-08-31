@@ -1,13 +1,15 @@
+import { useAuth } from "@/AuthContext";
 import { MoreVertical, ChevronLast, ChevronFirst } from "lucide-react";
-import { useContext, createContext, useState, type ReactNode } from "react";
+import { useContext, createContext, type ReactNode } from "react";
+import { useSidebar } from "@/context/SidebarContext";
 
-// define type for context
-type SidebarContextType = {
+// define type for context for sidebar items
+type SidebarItemContextType = {
   expanded: boolean;
 };
 
-// create context with correct type
-const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
+// create context with correct type for sidebar items
+const SidebarItemContext = createContext<SidebarItemContextType | undefined>(undefined);
 
 // props type for Sidebar
 interface SidebarProps {
@@ -15,10 +17,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ children }: SidebarProps) {
-  const [expanded, setExpanded] = useState(true);
+  const { expanded, toggleExpanded } = useSidebar();
+  const { user} = useAuth();
 
   return (
-    <aside className="h-screen">
+    <aside className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ${
+      expanded ? "w-64" : "w-16"
+    }`}>
       <nav className="h-full flex flex-col bg-white border-r shadow-sm">
         {/* Logo + toggle */}
         <div className="p-4 pb-2 flex justify-between items-center">
@@ -30,7 +35,7 @@ export default function Sidebar({ children }: SidebarProps) {
             alt="logo"
           />
           <button
-            onClick={() => setExpanded((curr) => !curr)}
+            onClick={toggleExpanded}
             className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100"
           >
             {expanded ? <ChevronFirst /> : <ChevronLast />}
@@ -38,14 +43,14 @@ export default function Sidebar({ children }: SidebarProps) {
         </div>
 
         {/* Menu items */}
-        <SidebarContext.Provider value={{ expanded }}>
+        <SidebarItemContext.Provider value={{ expanded }}>
           <ul className="flex-1 px-3">{children}</ul>
-        </SidebarContext.Provider>
+        </SidebarItemContext.Provider>
 
         {/* Footer user section */}
         <div className="border-t flex p-3">
           <img
-            src="https://ui-avatars.com/api/?background=c7d2fe&color=3730a3&bold=true"
+            src={user?.photoURL ?? undefined}
             alt="user avatar"
             className="w-10 h-10 rounded-md"
           />
@@ -55,8 +60,8 @@ export default function Sidebar({ children }: SidebarProps) {
             }`}
           >
             <div className="leading-4">
-              <h4 className="font-semibold">John Doe</h4>
-              <span className="text-xs text-gray-600">johndoe@gmail.com</span>
+              <h4 className="font-semibold">{user?.displayName}</h4>
+              <span className="text-xs text-gray-600">{user?.email}</span>
             </div>
             <MoreVertical size={20} />
           </div>
@@ -75,7 +80,7 @@ interface SidebarItemProps {
 }
 
 export function SidebarItem({ icon, text, active, alert }: SidebarItemProps) {
-  const context = useContext(SidebarContext);
+  const context = useContext(SidebarItemContext);
   if (!context) throw new Error("SidebarItem must be used within Sidebar");
   const { expanded } = context;
 
@@ -94,12 +99,13 @@ export function SidebarItem({ icon, text, active, alert }: SidebarItemProps) {
     >
       {icon}
       <span
-        className={`overflow-hidden transition-all ${
-          expanded ? "w-52 ml-3" : "w-0"
-        }`}
-      >
-        {text}
-      </span>
+  className={`whitespace-nowrap overflow-hidden transition-all ${
+    expanded ? "w-52 ml-3" : "w-0"
+  }`}
+>
+  {expanded && text}
+</span>
+
 
       {alert && (
         <div
