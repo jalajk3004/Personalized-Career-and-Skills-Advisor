@@ -12,11 +12,8 @@ const pool = new pg_1.Pool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false,
-    },
 });
 pool.on('connect', () => {
-    console.log('Connected to the database');
+    console.log('Connected to the database', pool);
 });
 exports.default = pool;
