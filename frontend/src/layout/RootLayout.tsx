@@ -19,7 +19,7 @@ const RootLayout = () => {
         )}
 
         {/* Scrollable main content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <Outlet />
         </main>
       </div>

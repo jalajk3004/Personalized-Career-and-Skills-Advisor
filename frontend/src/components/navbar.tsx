@@ -1,6 +1,7 @@
 
 import { auth } from "../config/firebase";
 import { useAuth } from "@/AuthContext";
+import { Link } from "react-scroll";
 
 
 const Navbar = () => {
@@ -21,25 +22,41 @@ const Navbar = () => {
    
 
   return (  
-    <nav className="w-full flex flex-col md:flex-row items-center justify-between px-6 mt-6 gap-4 md:gap-0">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white px-6 py-3 flex flex-col md:flex-row items-center justify-between">
       
       {/* Logo */}
-      <div className="bg-white shadow-md rounded-3xl px-5 py-2 flex items-center">
+      <div className="shadow-md rounded-3xl px-5 py-2 flex items-center">
         <span className="text-xl font-bold text-gray-800 mr-2">🌟</span>
         <span className="text-gray-800 font-semibold text-lg">Logo</span>
       </div>
 
       {/* Navigation Options */}
-      <div className="bg-white shadow-md rounded-3xl px-6 py-2 flex justify-center w-full md:w-1/3">
+      <div className=" shadow-md rounded-3xl px-6 py-2 flex justify-center w-full md:w-1/3">
         <ul className="flex flex-col md:flex-row gap-4 md:gap-8 items-center text-gray-700 font-medium">
-          <li className="hover:text-indigo-600 cursor-pointer transition">Home</li>
-          <li className="hover:text-indigo-600 cursor-pointer transition">About</li>
-          <li className="hover:text-indigo-600 cursor-pointer transition">Contact</li>
+          <li className="hover:text-indigo-600 cursor-pointer transition">
+            <Link to="home" spy={true} smooth={true} offset={-80} duration={500} >Home</Link>
+          </li>
+          <li className="hover:text-indigo-600 cursor-pointer transition">
+            <Link to="aboutUs" spy={true} smooth={true} offset={-70} duration={500} >
+            About Us
+            </Link>
+          </li>
+          <li className="hover:text-indigo-600 cursor-pointer transition">
+            <Link to="howitworks" spy={true} smooth={true} offset={-70} duration={500} >
+            How It Works
+            </Link>
+          </li>
+          <li className="hover:text-indigo-600 cursor-pointer transition">
+            <Link to="mapYourPath" spy={true} smooth={true} offset={-70} duration={500} >
+            Map Your Path
+            </Link>
+          
+          </li>
         </ul>
       </div>
 
       {/* Profile / Get Started */}
-      <div className="bg-white shadow-md rounded-3xl flex items-center">
+      <div className=" shadow-md rounded-3xl flex items-center">
         {user ? (
           <><button onClick={handlesingout} className=" px-5 py-2 flex items-center rounded-3xl  text-white shadow-md transition">
 
