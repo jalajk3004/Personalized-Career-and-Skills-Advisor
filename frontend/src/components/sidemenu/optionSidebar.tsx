@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Home, Inbox, MessageSquare, Workflow } from "lucide-react";
+import { Home, MessageSquare, Workflow } from "lucide-react";
 import Sidebar, { SidebarItem } from "./app-sidebar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { Link } from "react-router-dom";
@@ -77,7 +77,7 @@ const OptionSidebar = () => {
 
         {/* Empty state */}
         {!loading && recs.length === 0 && (
-          <p className="px-2 text-xs text-gray-400">No recommendations yet</p>
+          <p className="px-2 text-xs text-gray-400"></p>
         )}
       </Sidebar>
     </div>

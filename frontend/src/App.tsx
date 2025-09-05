@@ -1,11 +1,11 @@
 import { AuthProvider } from './AuthContext.tsx'
 import RootLayout from './layout/RootLayout.tsx'
 import Auth from './pages/Auth.tsx'
-import CareerPage from './pages/CareerPage.tsx'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import HomePage from './pages/HomePage .tsx'
 import CareerOption from './components/careerOption.tsx'
 import { SidebarProvider } from './context/SidebarContext.tsx'
+import CareerPage from './pages/careerForm/CareerPage.tsx'
 
 function App() {
   const router = createBrowserRouter(
