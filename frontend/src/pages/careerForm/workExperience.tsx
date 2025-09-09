@@ -1,5 +1,6 @@
 
 import { FormWrapper } from "./FormWrap"
+import { type FormData } from "./types";
 
 type WorkExperienceData = {
   no_experience: boolean
@@ -9,7 +10,7 @@ type WorkExperienceData = {
 }
 
 interface WorkExperienceProps extends WorkExperienceData {
-  updateFields: (fields: Partial<WorkExperienceData>) => void
+  updateFields: (fields: Partial<FormData>) => void
 }
 
 export function WorkExperience({no_experience, job_title, company_name, duration, updateFields}: WorkExperienceProps) {

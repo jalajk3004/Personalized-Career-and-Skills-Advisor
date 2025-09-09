@@ -1,4 +1,5 @@
 import { FormWrapper } from "./FormWrap"
+import { type FormData } from "./types";
 
 type EducationData = {
   highschool_name: string
@@ -11,7 +12,7 @@ type EducationData = {
 
 type EducationProps =  EducationData 
  & {
-    updateFields: (fields: Partial<EducationData>) => void
+    updateFields: (fields: Partial<FormData>) => void
 }
 
 export function EducationForm({highschool_name, highschool_stream, college, course_type, course, specialisation, updateFields}: EducationProps) {

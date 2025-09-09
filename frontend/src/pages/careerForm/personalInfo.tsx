@@ -1,4 +1,5 @@
 import { FormWrapper } from "./FormWrap"
+import { type FormData } from "./types";
 
 type UserData = {
     name: string
@@ -6,7 +7,7 @@ type UserData = {
 }
 
 type PersonalInfoProps = UserData & {
-    updateFields: (fields: Partial<UserData>) => void
+    updateFields: (fields: Partial<FormData>) => void
 }
 
 export function PersonalInfo({name, age, updateFields}: PersonalInfoProps) {

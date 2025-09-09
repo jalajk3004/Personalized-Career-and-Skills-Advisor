@@ -83,6 +83,7 @@ router.post("/", Authenticate_1.authenticate, (req, res) => __awaiter(void 0, vo
         ]);
         res.status(201).json({
             message: "Career recommendation saved successfully 🚀",
+            user_id,
             recommendation_id: insertRes.rows[0].recommendation_id
         });
     }

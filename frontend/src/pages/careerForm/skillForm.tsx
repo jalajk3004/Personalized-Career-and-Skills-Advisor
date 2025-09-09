@@ -1,5 +1,6 @@
 
 import { FormWrapper } from "./FormWrap"
+import { type FormData } from "./types";
 
 type SkillData = {
   skills: string
@@ -8,7 +9,7 @@ type SkillData = {
 }
 
 interface SkillFormProps extends SkillData {
-  updateFields: (fields: Partial<SkillData>) => void
+  updateFields: (fields: Partial<FormData>) => void
 }
 
 export function SkillForm({skills, interests, preferred_work_env, updateFields}: SkillFormProps) {

@@ -4,24 +4,8 @@ import { EducationForm } from "./educationForm";
 import { WorkExperience } from "./workExperience";
 import { SkillForm } from "./skillForm";
 import { useMultistepForm } from "./useMultipleForm";
-
-type FormData = {
-  name: string
-  age: string
-  highschool_name: string
-  highschool_stream: string
-  college: string
-  course_type: string
-  course: string
-  specialisation: string
-  no_experience: boolean
-  job_title: string
-  company_name: string
-  duration: string
-  skills: string
-  interests: string
-  preferred_work_env: string
-}
+import { getAuth } from "firebase/auth";
+import { type FormData } from "./types";
 
 const INITIAL_DATA: FormData = {
   name: "",
@@ -66,11 +50,29 @@ function CareerForm() {
 
   const handleSubmit = async () => {
     try {
-      console.log("Form Data:", data);
-      // TODO: Implement API call here
-      alert("Form submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not logged in");
+
+      const idToken = await user.getIdToken();
+
+      const res = await fetch("http://localhost:5000/api/career-recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to submit form");
+      
+      window.location.href = `/career/${result.user_id}/${result.recommendation_id}`;
+
+      console.log("Form submitted successfully:", result);
+    } catch (err) {
+      console.error("Error submitting form:", err);
       alert("Error submitting form. Please try again.");
     }
   };

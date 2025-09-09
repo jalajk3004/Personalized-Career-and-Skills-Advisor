@@ -116,6 +116,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res: Response) 
 
     res.status(201).json({
       message: "Career recommendation saved successfully 🚀",
+      user_id,
       recommendation_id: insertRes.rows[0].recommendation_id
     });
 
