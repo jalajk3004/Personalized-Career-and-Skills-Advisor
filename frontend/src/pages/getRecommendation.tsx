@@ -325,8 +325,8 @@ const CareerCard: React.FC<CareerCardProps> = ({ career, onLearnMore }) => {
             {career.description}
           </CardDescription>
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-            {career.formatted_salary ||
-              `${career.salary_range_min} - ${career.salary_range_max} ${career.currency}`}
+            {
+              `${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
           </div>
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-1">

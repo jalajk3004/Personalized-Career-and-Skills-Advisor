@@ -20,7 +20,7 @@ interface AIAnswer {
 const AIQuestionsPage = () => {
   const { userId, recommendationId } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading, token } = useAuth();
+  const {  loading: authLoading, token } = useAuth();
   
   const [questions, setQuestions] = useState<AIQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});

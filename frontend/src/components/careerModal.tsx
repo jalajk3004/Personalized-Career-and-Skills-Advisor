@@ -8,7 +8,7 @@ import {
   
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, BookOpen, DollarSign } from "lucide-react";
+import { TrendingUp, BookOpen } from "lucide-react";
 
 interface CareerOption {
   career_id: number;
@@ -62,10 +62,10 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
 
         {/* Salary */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-800 mb-4">
-          <DollarSign className="h-4 w-4" />
+         
           <span>
-            {career.formatted_salary ||
-              `${career.salary_range_min} - ${career.salary_range_max} ${career.currency}`}
+             {
+              `${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
           </span>
         </div>
 
