@@ -3,9 +3,10 @@ import RootLayout from './layout/RootLayout.tsx'
 import Auth from './pages/Auth.tsx'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import HomePage from './pages/HomePage .tsx'
-import CareerOption from './components/careerOption.tsx'
+import GetRecommendation from './pages/getRecommendation.tsx'
 import { SidebarProvider } from './context/SidebarContext.tsx'
 import CareerPage from './pages/careerForm/CareerPage.tsx'
+import AIQuestionsPage from './pages/careerForm/AIQuestionsPage.tsx'
 
 function App() {
   const router = createBrowserRouter(
@@ -14,7 +15,8 @@ function App() {
         <Route index element={<HomePage />} /> 
         <Route path='/auth' element={<Auth/>}/>
         <Route path="/career" element={<CareerPage />} />
-        <Route path="/career/:userId/:recommendationId" element={<CareerOption />} />
+        <Route path="/career/:userId/:recommendationId/ai-questions" element={<AIQuestionsPage />} />
+        <Route path="/career/:userId/:recommendationId" element={<GetRecommendation />} />
       </Route>
     )
   )

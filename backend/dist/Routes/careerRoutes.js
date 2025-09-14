@@ -17,10 +17,55 @@ const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const dbServices_1 = __importDefault(require("../services/dbServices"));
 const Authenticate_1 = require("../middleware/Authenticate");
+const careerController_1 = __importDefault(require("../controllers/careerController"));
 dotenv_1.default.config();
+// Utility functions for formatting career data
+class CareerUtils {
+    /**
+     * Format salary range for display
+     */
+    static formatSalary(min, max, currency = 'INR') {
+        const formatNumber = (num) => {
+            if (num >= 10000000)
+                return `${(num / 10000000).toFixed(1)}Cr`;
+            if (num >= 100000)
+                return `${(num / 100000).toFixed(1)}L`;
+            if (num >= 1000)
+                return `${(num / 1000).toFixed(0)}K`;
+            return num.toString();
+        };
+        return `${formatNumber(min)} - ${formatNumber(max)} ${currency}`;
+    }
+    /**
+     * Format growth rate for display
+     */
+    static formatGrowthRate(rate) {
+        return `${rate}% growth`;
+    }
+    /**
+     * Format career options for frontend display
+     */
+    static formatCareerOptionsForDisplay(careerOptions) {
+        return careerOptions.map(option => {
+            var _a, _b;
+            return (Object.assign(Object.assign({}, option), { formatted_salary: this.formatSalary(option.salary_range_min, option.salary_range_max, option.currency), formatted_growth_rate: this.formatGrowthRate(option.growth_rate), skills_display: ((_a = option.required_skills) === null || _a === void 0 ? void 0 : _a.slice(0, 4)) || [], additional_skills_count: Math.max(0, (((_b = option.required_skills) === null || _b === void 0 ? void 0 : _b.length) || 0) - 4) }));
+        });
+    }
+}
 const router = (0, express_1.default)();
 router.use((0, cors_1.default)({ origin: true }));
 router.use(express_1.default.json());
+// =================== AI-ENHANCED FORM ROUTES ===================
+// Enhanced form submission with AI question generation
+router.post("/ai-submit", Authenticate_1.authenticate, careerController_1.default.submitFormWithAI);
+// Get AI questions for a recommendation
+router.get("/ai-questions/:recommendationId", Authenticate_1.authenticate, careerController_1.default.getAIQuestions);
+// Submit AI answers and generate final recommendations
+router.post("/ai-answers", Authenticate_1.authenticate, careerController_1.default.submitAIAnswers);
+// Get career recommendations/options for a user
+router.get("/recommendations", Authenticate_1.authenticate, careerController_1.default.getCareerRecommendations);
+router.get("/recommendations/:userId/:recommendationId", Authenticate_1.authenticate, careerController_1.default.getCareerRecommendations);
+// =================== LEGACY ROUTES (for backward compatibility) ===================
 // 1️⃣ Get all career recommendations for a user
 router.get("/", Authenticate_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -53,6 +98,7 @@ router.get("/:recId", Authenticate_1.authenticate, (req, res) => __awaiter(void 
         res.status(500).json({ error: "Failed to fetch recommendation" });
     }
 }));
+// Legacy POST route (for backward compatibility)
 router.post("/", Authenticate_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { uid } = req.user; // Get UID from token
     const { name, age, highschool_name, highschool_stream, college, course_type, course, specialisation, no_experience, job_title, company_name, duration, skills, interests, preferred_work_env } = req.body;

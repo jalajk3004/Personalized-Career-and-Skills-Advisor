@@ -3,8 +3,9 @@ import { PersonalInfo } from "./personalInfo";
 import { EducationForm } from "./educationForm";
 import { WorkExperience } from "./workExperience";
 import { SkillForm } from "./skillForm";
+import { AIQuestionsForm } from "./AIQuestionsForm";
 import { useMultistepForm } from "./useMultipleForm";
-import { getAuth } from "firebase/auth";
+import { useAuth } from "../../AuthContext";
 import { type FormData } from "./types";
 
 const INITIAL_DATA: FormData = {
@@ -27,6 +28,17 @@ const INITIAL_DATA: FormData = {
 
 function CareerForm() {
   const [data, setData] = useState(INITIAL_DATA);
+  const [recommendationId, setRecommendationId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [aiAnswers, setAiAnswers] = useState<Record<string, string>>({});
+  const [aiQuestions, setAiQuestions] = useState<any[]>([]);
+  const [isSubmittingInitialForm, setIsSubmittingInitialForm] = useState(false);
+  const { token } = useAuth();
+  
+  const handleAIAnswersReady = (answers: Record<string, string>, questions: any[]) => {
+    setAiAnswers(answers);
+    setAiQuestions(questions);
+  };
   
   function updateFields(fields: Partial<FormData>) {
     setData(prev => {
@@ -34,33 +46,53 @@ function CareerForm() {
     })
   }
 
-  const { steps, currentStepIndex, step, isFirstStep, isLastStep, back, next } =
-      useMultistepForm([
-        <PersonalInfo {...data} updateFields={updateFields} />,
-        <EducationForm {...data} updateFields={updateFields} />,
-        <WorkExperience {...data} updateFields={updateFields} />,
-        <SkillForm {...data} updateFields={updateFields} />,
-      ])
+  const steps = [
+    <PersonalInfo {...data} updateFields={updateFields} />,
+    <EducationForm {...data} updateFields={updateFields} />,
+    <WorkExperience {...data} updateFields={updateFields} />,
+    <SkillForm {...data} updateFields={updateFields} />,
+    // Only show AI questions step if we have a recommendation ID
+    ...(recommendationId ? [
+      <AIQuestionsForm 
+        recommendationId={recommendationId} 
+        onAIAnswersReady={handleAIAnswersReady}
+      />
+    ] : []),
+  ];
+
+  const { currentStepIndex, step, isFirstStep, isLastStep, back, next } =
+      useMultistepForm(steps)
 
   function onSubmit(e: FormEvent) {
       e.preventDefault()
+      
+      // If we're at the skill form step (step 3, index 3) and don't have a recommendation ID yet
+      if (currentStepIndex === 3 && !recommendationId) {
+        handleInitialSubmit()
+        return
+      }
+      
+      // If we're not at the last step, go to next
       if (!isLastStep) return next()
-      handleSubmit()
+      
+      // If we're at the last step (AI questions), submit final answers
+      handleFinalSubmit()
   }
 
-  const handleSubmit = async () => {
+  const handleInitialSubmit = async () => {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) throw new Error("User not logged in");
+      setIsSubmittingInitialForm(true);
+      
+      if (!token) {
+        throw new Error("Authentication required");
+      }
 
-      const idToken = await user.getIdToken();
-
-      const res = await fetch("http://localhost:5000/api/career-recommendations", {
+      // Use the new AI-enhanced endpoint
+      const res = await fetch("http://localhost:5000/api/career-recommendations/ai-submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -68,12 +100,65 @@ function CareerForm() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to submit form");
       
-      window.location.href = `/career/${result.user_id}/${result.recommendation_id}`;
-
-      console.log("Form submitted successfully:", result);
+      // Set the recommendation ID and user ID to enable AI questions step
+      setRecommendationId(result.recommendation_id);
+      setUserId(result.user_id);
+      
+      // Move to next step (AI questions will now be available)
+      next();
+      
+      console.log("Initial form submitted successfully:", result);
     } catch (err) {
-      console.error("Error submitting form:", err);
+      console.error("Error submitting initial form:", err);
       alert("Error submitting form. Please try again.");
+    } finally {
+      setIsSubmittingInitialForm(false);
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    try {
+      if (!token || !recommendationId) {
+        throw new Error("Authentication or recommendation ID missing");
+      }
+
+      // Format answers for submission
+      const aiAnswersFormatted = Object.entries(aiAnswers)
+        .filter(([_, answer]) => answer.trim() !== '') // Only include non-empty answers
+        .map(([questionId, answer]) => {
+          const question = aiQuestions.find(q => q.id === questionId);
+          return {
+            question: question ? question.question_text : questionId,
+            answer: answer,
+            category: question ? question.category : 'ai_generated'
+          };
+        });
+
+      const res = await fetch('http://localhost:5000/api/career-recommendations/ai-answers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recommendationId,
+          ai_answers: aiAnswersFormatted
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error('Failed to submit AI answers');
+      
+      if (result.success) {
+        // Navigate to final recommendations page or results
+        const finalUserId = result.data.user_id || userId;
+        window.location.href = `/career/${finalUserId}/${recommendationId}`;
+      }
+      
+      console.log("Final submission successful:", result);
+    } catch (err) {
+      console.error("Error submitting final answers:", err);
+      alert("Error submitting answers. Please try again.");
     }
   };
 
@@ -103,6 +188,16 @@ function CareerForm() {
                 className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
               ></div>
+            </div>
+            {/* Show current step name */}
+            <div className="text-center mt-2">
+              <span className="text-xs text-gray-500">
+                {currentStepIndex === 0 && "Personal Information"}
+                {currentStepIndex === 1 && "Education Details"}
+                {currentStepIndex === 2 && "Work Experience"}
+                {currentStepIndex === 3 && "Skills & Interests"}
+                {currentStepIndex === 4 && "Some more Questions"}
+              </span>
             </div>
           </div>
         </div>
@@ -150,11 +245,20 @@ function CareerForm() {
               
               <button 
                 type="submit"
-                className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 group"
+                disabled={isSubmittingInitialForm}
+                className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isLastStep ? (
+                {isSubmittingInitialForm ? (
                   <>
-                    Submit
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : isLastStep ? (
+                  <>
+                    Get Recommendations
                     <svg className="w-4 h-4 ml-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -177,39 +281,3 @@ function CareerForm() {
 }
 
 export default CareerForm;
-
-
-
-
-
-
-
-
-
-
-// try {
-//     const auth = getAuth();
-//     const user = auth.currentUser;
-//     if (!user) throw new Error("User not logged in");
-
-//     const idToken = await user.getIdToken(); 
-
-//     const res = await fetch("http://localhost:5000/api/career-recommendations", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${idToken}`,
-//       },
-//       body: JSON.stringify(formData),
-//     });
-
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.error || "Failed to submit form");
-//     window.location.href = `/career/${data.user_id}/${data.recommendation_id}`;
-//     console.log("Form submitted successfully:", data);
-    
-    
-//   } catch (err) {
-//     console.error(err);
-//   }
-// };

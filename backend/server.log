@@ -1,0 +1,146 @@
+[dotenv@17.2.1] injecting env (19) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.1] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+(node:71913) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 Server running at http://localhost:5000
+🔍 Test recommendations endpoint called
+Using hardcoded user_id: 1
+Connected to the database
+Career options found: 5
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔍 getCareerRecommendations called
+User UID: 7CJL3jO0FPVSQV9U0oBLHi79Tub2
+Params - userId: 1 recommendationId: 24
+Connected to the database
+Connected to the database
+User query result: 1
+Found user_id: 1
+Fetching career options for user_id: 1
+Career options found: 5
+❌ Error getting career recommendations: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Error stack: TypeError: Cannot read properties of undefined (reading 'formatSalary')
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:379:95
+    at Array.map (<anonymous>)
+    at /home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:377:62
+    at Generator.next (<anonymous>)
+    at fulfilled (/home/jalaj/projects/GenAI/backend/dist/controllers/careerController.js:38:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
