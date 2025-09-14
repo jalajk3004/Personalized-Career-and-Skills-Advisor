@@ -5,7 +5,7 @@ const Howitworks = () => {
   return (
     <div className="min-h-screen m-4 bg-white text-gray-800 font-sans p-6 px-6 md:px-20 py-10">
       <div className="max-w-4xl mx-auto">
-        {/* Header Section */}
+        
         <header className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">How It Works</h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
@@ -13,16 +13,20 @@ const Howitworks = () => {
           </p>
         </header>
 
-        {/* Content Section */}
         <main className="flex flex-col md:flex-row items-center justify-between">
-          {/* Left side: Placeholder box */}
+         
           <div className="relative w-full md:w-1/2 flex-shrink-0 mb-12 md:mb-0">
-            <div className="w-full h-80 md:h-[400px] bg-gray-100 rounded-2xl shadow-inner animate-pulse"></div>
+            <div className="w-full h-80 md:h-[400px] bg-gray-100 rounded-2xl shadow-inner animate-pulse">
+              <img
+              src="/third.jpg" 
+              alt="Career Journey"
+              className="rounded-xl shadow-lg object-cover w-full h-full"
+            />
+            </div>
           </div>
 
-          {/* Right side: Steps List */}
           <div className="w-full md:w-1/2 md:pl-16 space-y-8">
-            {/* Step 1 */}
+            
             <div className="flex items-start">
               <div className="w-2 rounded-l-full h-19 bg-gradient-to-b from-purple-500 to-purple-800 shadow-lg"></div>
               <div className="flex-1 bg-white p-6 rounded-r-2xl shadow-xl border-l-2 border-transparent transition-transform transform hover:scale-105">

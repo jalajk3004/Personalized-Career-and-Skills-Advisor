@@ -135,7 +135,13 @@ const MapYourPath = () => {
           
           {/* Right side: Placeholder box */}
           <div className="w-full md:w-1/2 flex-shrink-0">
-            <div className="w-full h-96 md:h-[600px] bg-gray-100 rounded-2xl shadow-inner animate-pulse"></div>
+            <div className="w-full h-96 md:h-[600px] bg-gray-100 rounded-2xl shadow-inner animate-in">
+              <img
+              src="/fourth.jpg" 
+              alt="Career Journey"
+              className="rounded-xl shadow-lg object-cover w-full h-full"
+            />
+            </div>
           </div>
         </section>
       </div>

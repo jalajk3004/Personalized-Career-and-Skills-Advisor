@@ -2,7 +2,7 @@
 const AboutUs = () => {
   return (
     <section className="h-[calc(100vh-64px)] w-full bg-gradient-to-b from-white to-gray-50 px-6 md:px-20 py-8 flex flex-col mt-10 justify-between">
-      {/* Hero Section */}
+    
       <div className="text-center">
         <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900">
           About{" "}
@@ -16,8 +16,6 @@ const AboutUs = () => {
           professional path.
         </p>
       </div>
-
-      {/* Story Section */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-6 flex-1 m-20">
         {/* Text */}
         <div className="flex-1 text-center md:text-left">
@@ -35,11 +33,11 @@ const AboutUs = () => {
             meaningful change.
           </p>
         </div>
-        {/* Image Placeholder */}
+
         <div className="flex-1 flex justify-center">
           <div className="relative w-56 h-48 md:w-64 md:h-64">
             <img
-              src="/about-us.png" // replace with your image
+              src="/second.jpg" 
               alt="Career Journey"
               className="rounded-xl shadow-lg object-cover w-full h-full"
             />

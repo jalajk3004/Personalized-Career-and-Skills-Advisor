@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 const Home = () => {
   return (
     <section className="flex flex-col md:flex-row justify-between items-center h-[calc(100vh-64px)] px-6 md:px-20 py-10">
-      {/* Left Content */}
+     
       <div className="max-w-xl text-center md:text-left">
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-gray-900">
           Discover Your{" "}
@@ -38,15 +38,13 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Right Image */}
       <div className="mt-12 md:mt-0 md:w-1/2 flex justify-center">
         <div className="relative w-full max-w-md">
           <img
-            src="/career-hero.png" // replace with your actual image path
+            src="/first.jpg" 
             alt="Career path"
             className="rounded-2xl shadow-xl object-cover w-full h-auto"
           />
-          {/* Decorative Gradient Glow */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-400/20 to-pink-400/20 blur-3xl -z-10"></div>
         </div>
       </div>
