@@ -65,6 +65,8 @@ router.post("/ai-answers", Authenticate_1.authenticate, careerController_1.defau
 // Get career recommendations/options for a user
 router.get("/recommendations", Authenticate_1.authenticate, careerController_1.default.getCareerRecommendations);
 router.get("/recommendations/:userId/:recommendationId", Authenticate_1.authenticate, careerController_1.default.getCareerRecommendations);
+// Generate roadmap for a specific career
+router.get("/roadmaps/:userId/:recommendationId/:title", Authenticate_1.authenticate, careerController_1.default.generateRoadmap);
 // =================== LEGACY ROUTES (for backward compatibility) ===================
 // 1️⃣ Get all career recommendations for a user
 router.get("/", Authenticate_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

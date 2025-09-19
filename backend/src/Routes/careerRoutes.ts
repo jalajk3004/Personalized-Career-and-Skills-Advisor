@@ -67,6 +67,9 @@ router.post("/ai-answers", authenticate, careerController.submitAIAnswers);
 router.get("/recommendations", authenticate, careerController.getCareerRecommendations);
 router.get("/recommendations/:userId/:recommendationId", authenticate, careerController.getCareerRecommendations);
 
+// Generate roadmap for a specific career
+router.get("/roadmaps/:userId/:recommendationId/:title", authenticate, careerController.generateRoadmap);
+
 // =================== LEGACY ROUTES (for backward compatibility) ===================
 
 // 1️⃣ Get all career recommendations for a user

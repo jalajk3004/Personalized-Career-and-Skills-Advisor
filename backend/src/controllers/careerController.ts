@@ -68,6 +68,7 @@ class CareerController {
     this.getAIQuestions = this.getAIQuestions.bind(this);
     this.submitAIAnswers = this.submitAIAnswers.bind(this);
     this.getCareerRecommendations = this.getCareerRecommendations.bind(this);
+    this.generateRoadmap = this.generateRoadmap.bind(this);
   }
 
   // =================== ENHANCED FORM SUBMISSION WITH AI ===================
@@ -460,6 +461,192 @@ class CareerController {
    */
   private formatGrowthRate(rate: number): string {
     return `${rate}% growth`;
+  }
+
+  /**
+   * Generate roadmap for a specific career
+   */
+  async generateRoadmap(req: AuthenticatedRequest, res: Response) {
+    try {
+      console.log('🗺️ generateRoadmap called');
+      const { uid } = req.user!;
+      const { userId, recommendationId, title } = req.params;
+      
+      console.log('User UID:', uid);
+      console.log('Params - userId:', userId, 'recommendationId:', recommendationId, 'title:', title);
+      
+      // Get user_id from users table
+      const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
+      if (userRes.rows.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const user_id = userRes.rows[0].user_id;
+      
+      // Verify the user owns this recommendation
+      const recCheck = await pool.query(
+        "SELECT user_id FROM career_recommendations WHERE recommendation_id = $1",
+        [recommendationId]
+      );
+      
+      if (recCheck.rows.length === 0) {
+        return res.status(404).json({ message: "Recommendation not found" });
+      }
+      
+      if (recCheck.rows[0].user_id !== user_id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Get user's career data for roadmap generation
+      const recResult = await pool.query(
+        "SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2",
+        [recommendationId, user_id]
+      );
+      
+      if (recResult.rows.length === 0) {
+        return res.status(404).json({ message: "Career data not found" });
+      }
+      
+      const careerData = recResult.rows[0];
+      
+      // Convert database data to CareerData format for Gemini
+      const userData = {
+        name: careerData.name,
+        age: careerData.age,
+        highschool_name: careerData.highschool_name,
+        highschool_stream: careerData.highschool_stream,
+        college: careerData.college,
+        course_type: careerData.course_type,
+        course: careerData.course,
+        specialisation: careerData.specialisation,
+        no_experience: careerData.no_experience,
+        job_title: careerData.job_title,
+        company_name: careerData.company_name,
+        duration: careerData.duration,
+        skills: careerData.skills,
+        interests: careerData.interests,
+        preferred_work_env: careerData.preferred_work_env
+      };
+      
+      // Convert AI answers to Q&A format if available
+      let allAnswers = [];
+      if (careerData.ai_answers) {
+        try {
+          const aiAnswers = typeof careerData.ai_answers === 'string' 
+            ? JSON.parse(careerData.ai_answers) 
+            : careerData.ai_answers;
+          
+          allAnswers = aiAnswers.map((ans: any) => ({
+            question: ans.question,
+            answer: ans.answer,
+            category: ans.category || 'ai_generated'
+          }));
+        } catch (error) {
+          console.error('Error parsing AI answers:', error);
+        }
+      }
+      
+      // Decode the career title from URL format
+      const careerTitle = title.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      
+      console.log('Generating roadmap for career:', careerTitle);
+      
+      // Generate roadmap using Gemini service
+      const roadmapData = await geminiService.generateCareerRoadmap(
+        careerTitle,
+        userData,
+        allAnswers
+      );
+      
+      // Transform backend format to frontend format
+      const transformedRoadmap = this.transformRoadmapForFrontend(roadmapData);
+      
+      res.json({
+        success: true,
+        data: transformedRoadmap
+      });
+      
+    } catch (error) {
+      console.error("❌ Error generating roadmap:", error);
+      res.status(500).json({ 
+        error: "Failed to generate roadmap",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
+   * Transform backend roadmap format to frontend format
+   */
+  private transformRoadmapForFrontend(roadmapData: any) {
+    const transformedSteps = roadmapData.roadmap.map((step: any, index: number) => ({
+      id: `step_${index + 1}`,
+      name: step.step,
+      description: step.description,
+      link: this.generateStepLink(step.step, step.description),
+      icon: this.getStepIcon(step.step),
+      completed: false,
+      sub_steps: step.sub_steps || [],
+      duration: step.duration || '2-4 weeks',
+      key_outcomes: step.key_outcomes || []
+    }));
+
+    return {
+      name: roadmapData.career,
+      description: `Personalized roadmap for ${roadmapData.career} career path`,
+      steps: transformedSteps,
+      estimated_timeline: roadmapData.estimated_timeline || '18-24 months',
+      difficulty_level: roadmapData.difficulty_level || 'Intermediate'
+    };
+  }
+
+  /**
+   * Generate appropriate link for roadmap step
+   */
+  private generateStepLink(stepName: string, description: string): string {
+    const stepLower = stepName.toLowerCase();
+    
+    // Map step names to relevant learning resources
+    if (stepLower.includes('foundation') || stepLower.includes('basic')) {
+      return 'https://www.coursera.org/';
+    } else if (stepLower.includes('skill') || stepLower.includes('learn')) {
+      return 'https://www.udemy.com/';
+    } else if (stepLower.includes('project') || stepLower.includes('practice')) {
+      return 'https://github.com/';
+    } else if (stepLower.includes('network') || stepLower.includes('connect')) {
+      return 'https://www.linkedin.com/';
+    } else if (stepLower.includes('certification') || stepLower.includes('certificate')) {
+      return 'https://www.edx.org/';
+    } else if (stepLower.includes('job') || stepLower.includes('apply')) {
+      return 'https://www.naukri.com/';
+    } else {
+      return 'https://www.google.com/search?q=' + encodeURIComponent(stepName);
+    }
+  }
+
+  /**
+   * Get appropriate icon for roadmap step
+   */
+  private getStepIcon(stepName: string): string {
+    const stepLower = stepName.toLowerCase();
+    
+    if (stepLower.includes('foundation') || stepLower.includes('basic')) {
+      return '🏗️';
+    } else if (stepLower.includes('skill') || stepLower.includes('learn')) {
+      return '📚';
+    } else if (stepLower.includes('project') || stepLower.includes('practice')) {
+      return '💻';
+    } else if (stepLower.includes('network') || stepLower.includes('connect')) {
+      return '🤝';
+    } else if (stepLower.includes('certification') || stepLower.includes('certificate')) {
+      return '🏆';
+    } else if (stepLower.includes('job') || stepLower.includes('apply')) {
+      return '💼';
+    } else if (stepLower.includes('experience') || stepLower.includes('internship')) {
+      return '🎯';
+    } else {
+      return '📋';
+    }
   }
 }
 export default new CareerController();
