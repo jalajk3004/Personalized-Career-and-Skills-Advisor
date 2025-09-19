@@ -5,10 +5,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BookOpen } from "lucide-react";
+import { Button } from "./ui/button";
+import { useNavigate, useParams } from "react-router-dom"; // ✅ import
 
 interface CareerOption {
   career_id: number;
@@ -31,20 +32,30 @@ interface CareerModalProps {
 }
 
 const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const { userId, recommendationId } = useParams(); 
+
   if (!career) return null;
+
+  const handleRoadmapClick = () => {
+    if (userId && recommendationId && career?.name) {
+      const formattedTitle = career.name.toLowerCase().replace(/\s+/g, "-"); // replace spaces
+      navigate(`/career/${userId}/${recommendationId}/roadmap/${formattedTitle}`);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="
-          w-[95vw]       /* take almost full screen width */
-          max-w-5xl      /* wider modal on larger screens */
-          h-auto         /* let content decide height */
-          max-h-[90vh]   /* keep within viewport */
-          bg-white       /* solid background */
+          w-[95vw]     
+          max-w-5xl      
+          h-auto         
+          max-h-[90vh]  
+          bg-white       
           rounded-2xl
           shadow-lg
-          overflow-hidden /* prevent scrollbars */
+          overflow-hidden 
         "
       >
         <DialogHeader>
@@ -62,10 +73,8 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
 
         {/* Salary */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-800 mb-4">
-         
           <span>
-             {
-              `${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
+            {`${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
           </span>
         </div>
 
@@ -77,20 +86,25 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
 
         {/* Skills */}
         <div>
-            <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
-              <BookOpen className="h-5 w-5" />
-              Required Skills:
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {career.required_skills?.map((skill: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-sm">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
+          <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
+            <BookOpen className="h-5 w-5" />
+            Required Skills:
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {career.required_skills?.map((skill: string, index: number) => (
+              <Badge key={index} variant="outline" className="text-sm">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        <Button
+          className="bg-zinc-900 text-white mt-6"
+          onClick={handleRoadmapClick}
+        >
+          Get the Roadmap
+        </Button>
         </div>
 
-      
       </DialogContent>
     </Dialog>
   );
