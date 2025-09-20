@@ -79,7 +79,6 @@ class GeminiService {
                 console.error('Error generating career roadmap:', error);
                 // If it's a JSON parsing error, provide a fallback roadmap
                 if (error instanceof Error && error.message.includes('JSON')) {
-                    console.log('JSON parsing failed, returning fallback roadmap');
                     return this.validateRoadmap(null, career);
                 }
                 throw new Error('Failed to generate career roadmap');
@@ -449,7 +448,6 @@ Return ONLY the JSON array with no additional text or commentary.
      * Validate and ensure proper roadmap structure
      */
     validateRoadmap(roadmap, career) {
-        console.log('Validating roadmap structure:', roadmap);
         // Provide comprehensive fallback structure if validation fails
         const fallbackRoadmap = {
             career: career,
@@ -520,12 +518,10 @@ Return ONLY the JSON array with no additional text or commentary.
      * Convert LLM text output to JSON robustly (handles code fences and extra text)
      */
     toJson(text) {
-        console.log('Raw AI response:', text.substring(0, 500) + '...');
         try {
             return JSON.parse(text);
         }
         catch (error) {
-            console.log('Initial JSON parse failed, attempting cleanup...');
             // Strip Markdown code fences if present
             let cleaned = text
                 .replace(/^```[a-zA-Z]*\n/m, '')
@@ -535,14 +531,12 @@ Return ONLY the JSON array with no additional text or commentary.
                 return JSON.parse(cleaned);
             }
             catch (error) {
-                console.log('Cleaned JSON parse failed, attempting advanced cleanup...');
                 // Try to fix common JSON issues
                 cleaned = this.fixCommonJsonIssues(cleaned);
                 try {
                     return JSON.parse(cleaned);
                 }
                 catch (error) {
-                    console.log('Fixed JSON parse failed, attempting extraction...');
                     // Try to extract JSON object/array with more sophisticated regex
                     const jsonMatch = this.extractJsonFromText(cleaned);
                     if (jsonMatch) {
