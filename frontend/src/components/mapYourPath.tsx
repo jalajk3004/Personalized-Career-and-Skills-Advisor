@@ -45,7 +45,7 @@ const MapYourPath = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <header className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Map Your Path</h1>
+          <h1 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Map Your Path</h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
             Discover personalized career recommendations based on your unique profile, complete with detailed roadmaps and actionable next steps.
           </p>
@@ -61,7 +61,7 @@ const MapYourPath = () => {
               {/* Carousel Items */}
               {careerPaths.map((path, i) => (
                 <div key={i} className="min-w-[85%] sm:min-w-[45%] md:min-w-[30%] lg:min-w-[23%] flex-shrink-0 bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center transition-transform hover:scale-105 duration-300">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-16 h-16 flex items-center justify-center text-white mb-4">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full w-16 h-16 flex items-center justify-center text-white mb-4">
                     <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6h-2v6zm0-8h2V7h-2v2z" />
                     </svg>

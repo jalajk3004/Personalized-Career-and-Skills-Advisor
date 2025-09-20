@@ -4,10 +4,12 @@ import Home from "@/components/home";
 import Howitworks from "@/components/howitworks";
 import MapYourPath from "@/components/mapYourPath";
 import Footer from "@/components/footer";
+import Navbar from "@/components/navbar";
 
 const HomePage = () => {
   return (
     <div>
+      <Navbar />
       <Element name="home">
         <Home />
       </Element>

@@ -6,8 +6,8 @@ const AboutUs = () => {
       <div className="text-center">
         <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900">
           About{" "}
-          <span className="bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-            CareerGuide AI
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Prosperia
           </span>
         </h1>
         <p className="mt-3 text-sm md:text-base text-gray-600 max-w-2xl mx-auto">

@@ -7,7 +7,7 @@ const Howitworks = () => {
       <div className="max-w-4xl mx-auto">
         
         <header className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">How It Works</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">How It Works</h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
             Our AI-powered platform guides you through a simple 4-step process to discover your ideal career path and create an actionable plan.
           </p>

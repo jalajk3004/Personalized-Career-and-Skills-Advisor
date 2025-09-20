@@ -8,7 +8,7 @@ const Home = () => {
       <div className="max-w-xl text-center md:text-left">
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-gray-900">
           Discover Your{" "}
-          <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Perfect Career
           </span>{" "}
           Path
@@ -22,7 +22,7 @@ const Home = () => {
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-center md:justify-start">
           <Link to="/career">
-            <Button className="cursor-pointer px-8 py-3 text-lg font-medium shadow-lg rounded-xl text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+            <Button className="cursor-pointer px-8 py-3 text-lg font-medium shadow-lg rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
               Start Your Journey
             </Button>
           </Link>

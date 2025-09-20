@@ -25,9 +25,8 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full z-50 bg-white px-6 py-3 flex flex-col md:flex-row items-center justify-between">
       
       {/* Logo */}
-      <div className="shadow-md rounded-3xl px-5 py-2 flex items-center">
-        <span className="text-xl font-bold text-gray-800 mr-2">🌟</span>
-        <span className="text-gray-800 font-semibold text-lg">Logo</span>
+      <div className="shadow-md rounded-3xl px-2 py-1 flex items-center">
+        <img src="/prosperia_1.svg" alt="Logo" className="w-20 h-15" />
       </div>
 
       {/* Navigation Options */}
