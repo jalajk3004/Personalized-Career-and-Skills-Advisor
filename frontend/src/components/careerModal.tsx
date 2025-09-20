@@ -39,7 +39,10 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
 
   const handleRoadmapClick = () => {
     if (userId && recommendationId && career?.name) {
-      const formattedTitle = career.name.toLowerCase().replace(/\s+/g, "-"); // replace spaces
+      // Replace spaces with hyphens and forward slashes with underscores for URL safety
+      const formattedTitle = career.name.toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/\//g, "_");
       navigate(`/career/${userId}/${recommendationId}/roadmap/${formattedTitle}`);
     }
   };

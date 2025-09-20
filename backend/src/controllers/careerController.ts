@@ -542,8 +542,8 @@ class CareerController {
         }
       }
       
-      // Decode the career title from URL format
-      const careerTitle = title.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      // Decode the career title from URL format, handling special characters
+      const careerTitle = title.replace(/-/g, ' ').replace(/_/g, '/').replace(/\b\w/g, l => l.toUpperCase());
       
    
       // Generate roadmap using Gemini service
