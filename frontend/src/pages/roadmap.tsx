@@ -238,63 +238,64 @@ const Roadmap: React.FC = () => {
           <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-1 bg-gradient-to-b from-blue-500 to-blue-600 h-full rounded-full"></div>
           
           {/* Timeline Steps */}
-          <div className="space-y-8 md:space-y-16">
-            {processedSteps.map((step, index) => (
-              <div key={step.id} className="relative flex flex-col md:flex-row items-center">
-                {/* Timeline Node */}
-                <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 mb-4 md:mb-0">
-                  <div
-                    className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-base md:text-lg shadow-lg cursor-pointer hover:bg-blue-700 transition-all duration-300 hover:scale-110"
-                    onClick={(e) => handleStepClick(e, step)}
-                  >
-                    {index + 1}
-                  </div>
-                </div>
+<div className="space-y-8 md:space-y-16">
+  {processedSteps.map((step, index) => (
+    <div
+      key={step.id}
+      className="relative flex flex-col md:flex-row items-center"
+    >
+      {/* Timeline Node */}
+      <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 mb-4 md:mb-0">
+        <div
+          className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-base md:text-lg shadow-lg cursor-pointer hover:bg-blue-700 transition-all duration-300 hover:scale-110"
+          onClick={(e) => handleStepClick(e, step)}
+        >
+          {index + 1}
+        </div>
+      </div>
 
-                {/* Step Content Card */}
-                <div className="w-full md:w-5/12 md:pr-8 md:pl-8 md:ml-auto">
-                  <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 md:p-6 border border-gray-100 hover:border-blue-200 group">
-                    
-                    {/* Step Icon */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-xl md:text-2xl">{step.icon}</span>
-                      <div className="flex-1"></div>
-                    </div>
-
-                    {/* Step Title */}
-                    <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors duration-300">
-                      {step.name}
-                    </h3>
-
-                    {/* Duration Badge */}
-                    {(step as any).duration && (
-                      <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium mb-3">
-                        <span>⏱️</span>
-                        <span>{(step as any).duration}</span>
-                      </div>
-                    )}
-
-                    {/* Click for Details Button */}
-                    <button
-                      data-step-button
-                      onClick={(e) => handleStepClick(e, step)}
-                      className="w-full bg-blue-50 text-blue-700 py-2 px-4 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium mb-2"
-                    >
-                      Tap for details →
-                    </button>
-
-                    {/* Open Resource Button */}
-                    <button
-                      onClick={() => window.open(step.link, "_blank", "noopener,noreferrer")}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                    >
-                      Open Resource →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Step Content Card */}
+      <div
+        className={`
+          w-full md:w-5/12 
+          ${step.position === "left" ? "md:pr-8 md:mr-auto" : "md:pl-8 md:ml-auto"}
+        `}
+      >
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 md:p-6 border border-gray-100 hover:border-blue-200 group">
+          
+          {/* Step Icon */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-xl md:text-2xl">{step.icon}</span>
+            <div className="flex-1"></div>
           </div>
+
+          {/* Step Title */}
+          <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors duration-300">
+            {step.name}
+          </h3>
+
+          {/* Duration Badge */}
+          {(step as any).duration && (
+            <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium mb-3">
+              <span>⏱️</span>
+              <span>{(step as any).duration}</span>
+            </div>
+          )}
+
+          {/* Click for Details Button */}
+          <button
+            data-step-button
+            onClick={(e) => handleStepClick(e, step)}
+            className="w-full bg-blue-50 text-blue-700 py-2 px-4 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium mb-2"
+          >
+            Tap for details →
+          </button>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
         </div>
 
         {/* Enhanced Tooltip */}
