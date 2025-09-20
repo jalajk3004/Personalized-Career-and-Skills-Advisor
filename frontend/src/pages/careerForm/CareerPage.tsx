@@ -33,6 +33,7 @@ function CareerForm() {
   const [aiAnswers, setAiAnswers] = useState<Record<string, string>>({});
   const [aiQuestions, setAiQuestions] = useState<any[]>([]);
   const [isSubmittingInitialForm, setIsSubmittingInitialForm] = useState(false);
+  const [isSubmittingFinalForm, setIsSubmittingFinalForm] = useState(false);
   const { token } = useAuth();
   
   const handleAIAnswersReady = (answers: Record<string, string>, questions: any[]) => {
@@ -51,7 +52,6 @@ function CareerForm() {
     <EducationForm {...data} updateFields={updateFields} />,
     <WorkExperience {...data} updateFields={updateFields} />,
     <SkillForm {...data} updateFields={updateFields} />,
-    // Only show AI questions step if we have a recommendation ID
     ...(recommendationId ? [
       <AIQuestionsForm 
         recommendationId={recommendationId} 
@@ -66,16 +66,13 @@ function CareerForm() {
   function onSubmit(e: FormEvent) {
       e.preventDefault()
       
-      // If we're at the skill form step (step 3, index 3) and don't have a recommendation ID yet
       if (currentStepIndex === 3 && !recommendationId) {
         handleInitialSubmit()
         return
       }
       
-      // If we're not at the last step, go to next
       if (!isLastStep) return next()
       
-      // If we're at the last step (AI questions), submit final answers
       handleFinalSubmit()
   }
 
@@ -87,7 +84,6 @@ function CareerForm() {
         throw new Error("Authentication required");
       }
 
-      // Use the new AI-enhanced endpoint
       const res = await fetch("http://localhost:5000/api/career-recommendations/ai-submit", {
         method: "POST",
         headers: {
@@ -100,11 +96,9 @@ function CareerForm() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to submit form");
       
-      // Set the recommendation ID and user ID to enable AI questions step
       setRecommendationId(result.recommendation_id);
       setUserId(result.user_id);
       
-      // Move to next step (AI questions will now be available)
       next();
       
       console.log("Initial form submitted successfully:", result);
@@ -118,13 +112,14 @@ function CareerForm() {
 
   const handleFinalSubmit = async () => {
     try {
+      setIsSubmittingFinalForm(true);
+
       if (!token || !recommendationId) {
         throw new Error("Authentication or recommendation ID missing");
       }
 
-      // Format answers for submission
       const aiAnswersFormatted = Object.entries(aiAnswers)
-        .filter(([_, answer]) => answer.trim() !== '') // Only include non-empty answers
+        .filter(([_, answer]) => answer.trim() !== '')
         .map(([questionId, answer]) => {
           const question = aiQuestions.find(q => q.id === questionId);
           return {
@@ -150,7 +145,6 @@ function CareerForm() {
       if (!res.ok) throw new Error('Failed to submit AI answers');
       
       if (result.success) {
-        // Navigate to final recommendations page or results
         const finalUserId = result.data.user_id || userId;
         window.location.href = `/career/${finalUserId}/${recommendationId}`;
       }
@@ -159,17 +153,56 @@ function CareerForm() {
     } catch (err) {
       console.error("Error submitting final answers:", err);
       alert("Error submitting answers. Please try again.");
+    } finally {
+      setIsSubmittingFinalForm(false);
     }
   };
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-8 px-4">
+   
+      {isSubmittingFinalForm && (
+  <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+    <div className="flex flex-col items-center space-y-6">
+      {/* Pulse background circle */}
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-blue-200 opacity-50 animate-ping"></div>
+        <svg
+          className="animate-spin h-14 w-14 text-blue-600 relative z-10"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 
+              0 5.373 0 12h4zm2 5.291A7.962 
+              7.962 0 714 12H0c0 3.042 1.135 
+              5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+      </div>
+
+      {/* Loader Text */}
+      <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse">
+        Fetching your Career Paths...
+      </p>
+    </div>
+  </div>
+)}
+
+
       <div className="w-full max-w-6xl mx-auto">
-        {/* Main Header */}
         <div className="text-center mb-8">
-          
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Career Guidance Form
           </h1>
@@ -177,7 +210,6 @@ function CareerForm() {
             Help us understand your background and aspirations to provide personalized career recommendations
           </p>
           
-          {/* Progress Bar */}
           <div className="max-w-md mx-auto mt-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">Progress</span>
@@ -189,7 +221,6 @@ function CareerForm() {
                 style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
               ></div>
             </div>
-            {/* Show current step name */}
             <div className="text-center mt-2">
               <span className="text-xs text-gray-500">
                 {currentStepIndex === 0 && "Personal Information"}
@@ -203,14 +234,12 @@ function CareerForm() {
         </div>
 
         <form onSubmit={onSubmit} className="space-y-8">
-          {/* Form step content */}
           <div className="relative">
             <div className="transition-all duration-300 ease-in-out">
               {step}
             </div>
           </div>
           
-          {/* Enhanced Navigation buttons */}
           <div className="flex justify-center">
             <div className="flex items-center space-x-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
               {!isFirstStep ? (
@@ -245,7 +274,7 @@ function CareerForm() {
               
               <button 
                 type="submit"
-                disabled={isSubmittingInitialForm}
+                disabled={isSubmittingInitialForm || isSubmittingFinalForm}
                 className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isSubmittingInitialForm ? (
