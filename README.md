@@ -50,7 +50,7 @@ docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5431:5432 -
 ```
 To migrate the schema:
 ```bash
-
+docker exec -i postgres psql -U postgres -d postgres < schema.sql
 ```
 If you dont have the docker, install from [here](https://docs.docker.com/get-docker/)
 
