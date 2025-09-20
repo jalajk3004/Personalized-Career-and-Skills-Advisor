@@ -9,7 +9,7 @@ const RootLayout = () => {
   const hideSidebarPaths = ["/", "/auth"];
 
   const shouldShowSidebar = !hideSidebarPaths.includes(location.pathname);
-  const isHomePage = location.pathname === "/";
+  const isHomePage = location.pathname === "/auth";
 
   return (
     <div className="min-h-screen flex flex-col">
