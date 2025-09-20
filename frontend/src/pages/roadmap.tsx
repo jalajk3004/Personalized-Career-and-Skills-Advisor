@@ -71,7 +71,6 @@ const Roadmap: React.FC = () => {
         }
 
         const response = await res.json();
-        console.log('Roadmap API Response:', response);
         
         if (response.success && response.data) {
           setRoadmapData(response.data);

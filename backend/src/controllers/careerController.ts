@@ -38,13 +38,12 @@ async function generateAIQuestionsFromDB(dbData: any): Promise<AIQuestion[]> {
       { question: "What is your preferred work environment?", answer: dbData.preferred_work_env, category: "preferences" }
     ].filter(qa => qa.answer && qa.answer.trim() !== ''); // Filter out empty answers
     
-    console.log('Generating AI questions with context:', qaContext);
+    
     
     // Generate AI questions using Gemini
     const generatedQuestions = await geminiService.generateFollowUpQuestions(qaContext, 5);
     
-    console.log('Generated questions from Gemini:', generatedQuestions);
-    
+   
     // Convert to our format and add IDs
     return generatedQuestions.map((q, index) => ({
       id: `ai_${Date.now()}_${index}`,
@@ -363,22 +362,21 @@ class CareerController {
    */
   async getCareerRecommendations(req: AuthenticatedRequest, res: Response) {
     try {
-      console.log('🔍 getCareerRecommendations called');
+      
       const { uid } = req.user!;
       const { userId, recommendationId } = req.params;
       
-      console.log('User UID:', uid);
-      console.log('Params - userId:', userId, 'recommendationId:', recommendationId);
+      
       
       // Get user_id from users table
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
-      console.log('User query result:', userRes.rows.length);
+      
       if (userRes.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
       }
       
       const user_id = userRes.rows[0].user_id;
-      console.log('Found user_id:', user_id);
+      
       
       // Verify the user owns this recommendation (if recommendationId is provided)
       if (recommendationId) {
@@ -396,13 +394,12 @@ class CareerController {
         }
       }
       
-      // Get career options for the user
-      console.log('Fetching career options for user_id:', user_id);
+      
       const careerOptions = await careerOptionsService.getCareerOptionsForUser(user_id);
-      console.log('Career options found:', careerOptions.length);
+      
       
       if (careerOptions.length === 0) {
-        console.log('No career options found for user');
+       
         return res.json({
           success: true,
           message: "No career recommendations found. Please complete the career assessment first.",
@@ -468,12 +465,11 @@ class CareerController {
    */
   async generateRoadmap(req: AuthenticatedRequest, res: Response) {
     try {
-      console.log('🗺️ generateRoadmap called');
+      
       const { uid } = req.user!;
       const { userId, recommendationId, title } = req.params;
       
-      console.log('User UID:', uid);
-      console.log('Params - userId:', userId, 'recommendationId:', recommendationId, 'title:', title);
+      
       
       // Get user_id from users table
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
@@ -549,8 +545,7 @@ class CareerController {
       // Decode the career title from URL format
       const careerTitle = title.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       
-      console.log('Generating roadmap for career:', careerTitle);
-      
+   
       // Generate roadmap using Gemini service
       const roadmapData = await geminiService.generateCareerRoadmap(
         careerTitle,

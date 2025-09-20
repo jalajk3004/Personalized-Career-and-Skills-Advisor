@@ -127,7 +127,6 @@ class GeminiService {
       
       // If it's a JSON parsing error, provide a fallback roadmap
       if (error instanceof Error && error.message.includes('JSON')) {
-        console.log('JSON parsing failed, returning fallback roadmap');
         return this.validateRoadmap(null, career);
       }
       
@@ -527,7 +526,6 @@ Return ONLY the JSON array with no additional text or commentary.
    * Validate and ensure proper roadmap structure
    */
   private validateRoadmap(roadmap: any, career: string): CareerRoadmap {
-    console.log('Validating roadmap structure:', roadmap);
     
     // Provide comprehensive fallback structure if validation fails
     const fallbackRoadmap: CareerRoadmap = {
@@ -604,12 +602,10 @@ Return ONLY the JSON array with no additional text or commentary.
    * Convert LLM text output to JSON robustly (handles code fences and extra text)
    */
   private toJson(text: string): any {
-    console.log('Raw AI response:', text.substring(0, 500) + '...');
     
     try {
       return JSON.parse(text);
     } catch (error) {
-      console.log('Initial JSON parse failed, attempting cleanup...');
       
       // Strip Markdown code fences if present
       let cleaned = text
@@ -620,7 +616,6 @@ Return ONLY the JSON array with no additional text or commentary.
       try {
         return JSON.parse(cleaned);
       } catch (error) {
-        console.log('Cleaned JSON parse failed, attempting advanced cleanup...');
         
         // Try to fix common JSON issues
         cleaned = this.fixCommonJsonIssues(cleaned);
@@ -628,7 +623,6 @@ Return ONLY the JSON array with no additional text or commentary.
         try {
           return JSON.parse(cleaned);
         } catch (error) {
-          console.log('Fixed JSON parse failed, attempting extraction...');
           
           // Try to extract JSON object/array with more sophisticated regex
           const jsonMatch = this.extractJsonFromText(cleaned);

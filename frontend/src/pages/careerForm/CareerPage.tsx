@@ -101,7 +101,6 @@ function CareerForm() {
       
       next();
       
-      console.log("Initial form submitted successfully:", result);
     } catch (err) {
       console.error("Error submitting initial form:", err);
       alert("Error submitting form. Please try again.");
@@ -149,7 +148,6 @@ function CareerForm() {
         window.location.href = `/career/${finalUserId}/${recommendationId}`;
       }
       
-      console.log("Final submission successful:", result);
     } catch (err) {
       console.error("Error submitting final answers:", err);
       alert("Error submitting answers. Please try again.");
