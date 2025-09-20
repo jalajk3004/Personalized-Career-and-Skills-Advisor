@@ -17,10 +17,10 @@ export function SkillForm({skills, interests, preferred_work_env, updateFields}:
     <FormWrapper title="Skills and Interests" >
       <div className="grid grid-cols-1 gap-6">
         <div>
-          <label>Technical Skills</label>
+          <label>Skills</label>
           <textarea 
             id="skills" 
-            placeholder="e.g., JavaScript, Python, Data Analysis, Digital Marketing, Graphic Design (separate with commas)" 
+            placeholder="e.g., JavaScript, Painting, Videography, Digital Marketing, Graphic Design (separate with commas)" 
             required 
             value={skills} 
             onChange={e => updateFields({ skills: e.target.value })}
