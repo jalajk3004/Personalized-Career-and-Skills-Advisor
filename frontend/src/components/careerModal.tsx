@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BookOpen } from "lucide-react";
 import { Button } from "./ui/button";
-import { useNavigate, useParams } from "react-router-dom"; // ✅ import
+import { useNavigate, useParams } from "react-router-dom"; 
 
 interface CareerOption {
   career_id: number;
@@ -39,7 +39,6 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
 
   const handleRoadmapClick = () => {
     if (userId && recommendationId && career?.name) {
-      // Replace spaces with hyphens and forward slashes with underscores for URL safety
       const formattedTitle = career.name.toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/\//g, "_");
@@ -53,15 +52,15 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
         className="
           w-[95vw]     
           max-w-5xl      
-          h-auto         
-          max-h-[90vh]  
+          h-[90vh]        
           bg-white       
           rounded-2xl
           shadow-lg
-          overflow-hidden 
+          flex flex-col
         "
       >
-        <DialogHeader>
+        {/* Fixed header */}
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             {career.name}
             <Badge variant="secondary" className="flex items-center gap-1 text-xs">
@@ -74,40 +73,46 @@ const CareerModal: React.FC<CareerModalProps> = ({ career, isOpen, onClose }) =>
           </DialogDescription>
         </DialogHeader>
 
-        {/* Salary */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-800 mb-4">
-          <span>
-            {`${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
-          </span>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-3 mb-6">
-          <h3 className="font-semibold text-lg">About this career</h3>
-          <p className="text-gray-700 leading-relaxed">{career.description}</p>
-        </div>
-
-        {/* Skills */}
-        <div>
-          <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
-            <BookOpen className="h-5 w-5" />
-            Required Skills:
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {career.required_skills?.map((skill: string, index: number) => (
-              <Badge key={index} variant="outline" className="text-sm">
-                {skill}
-              </Badge>
-            ))}
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-1 space-y-6">
+          {/* Salary */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-800">
+            <span>
+              {`${career.currency} ${career.salary_range_min} - ${career.salary_range_max} LPA`}
+            </span>
           </div>
-        <Button
-          className="bg-zinc-900 text-white mt-6"
-          onClick={handleRoadmapClick}
-        >
-          Get the Roadmap
-        </Button>
+
+          {/* Description */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-lg">About this career</h3>
+            <p className="text-gray-700 leading-relaxed">{career.description}</p>
+          </div>
+
+          {/* Skills */}
+          <div>
+            <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
+              <BookOpen className="h-5 w-5" />
+              Required Skills:
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {career.required_skills?.map((skill: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-sm">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </div>
         </div>
 
+        {/* Sticky footer */}
+        <div className="shrink-0 pt-4">
+          <Button
+            className="w-full bg-zinc-900 text-white"
+            onClick={handleRoadmapClick}
+          >
+            Get the Roadmap
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
