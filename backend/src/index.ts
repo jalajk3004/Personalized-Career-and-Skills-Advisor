@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 import userRouter  from "./Routes/userRoutes";
 import careerRouter  from "./Routes/careerRoutes";
@@ -10,9 +11,12 @@ import pool from "./services/dbServices";
 
 const app = express();
 
-
+// Enable CORS for all origins (adjust for production)
 app.use(cors({ origin: true }));
 app.use(express.json());
+
+// Serve static files from the public directory (frontend build)
+app.use(express.static(path.join(__dirname, '../public')));
 
 
 // server.js (temporary debugging code)
@@ -57,8 +61,12 @@ app.get("/health", async (req, res) => {
 app.use("/api/users", userRouter );
 app.use("/api/career-recommendations", careerRouter );
 
+// Catch-all handler: send back React's index.html file for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
