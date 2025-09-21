@@ -2,17 +2,49 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const pool = new Pool({
+// Enhanced database configuration with better error handling
+const dbConfig = {
   host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
+  port: Number(process.env.DB_PORT) || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 20,
+};
+
+// Validate required environment variables
+const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingVars);
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+}
+
+console.log('🔧 Database configuration:', {
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  database: dbConfig.database,
+  ssl: dbConfig.ssl ? 'enabled' : 'disabled',
+  environment: process.env.NODE_ENV || 'development'
 });
 
-pool.on('connect', () => {
-  console.log('Connected to the database');
+const pool = new Pool(dbConfig);
+
+pool.on('connect', (client) => {
+  console.log('✅ Connected to the database');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ Database connection error:', err);
+});
+
+pool.on('remove', () => {
+  console.log('🔌 Database connection removed');
 });
 
 // Interfaces for type safety
