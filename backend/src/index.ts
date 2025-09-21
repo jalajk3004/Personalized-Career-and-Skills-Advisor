@@ -15,10 +15,6 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 
-// server.js (temporary debugging code)
-
-
-
 app.get("/", async (req, res) => {
   const result = await pool.query("SELECT current_database()");
   res.json(  `the databsae is :${result.rows[0].current_database}`  );
