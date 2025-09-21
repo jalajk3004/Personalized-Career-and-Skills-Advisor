@@ -46,7 +46,7 @@ npm run build
 ### 5. For starting Database
 Build a postgres docker image:
 ```bash
-docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5431:5432 -d postgres
+docker run --name postgres -e POSTGRES_PASSWORD=<your password> -p 5431:5432 -d postgres
 ```
 To migrate the schema:
 ```bash
