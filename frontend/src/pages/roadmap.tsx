@@ -53,9 +53,10 @@ const Roadmap: React.FC = () => {
         if (!token) {
           throw new Error('Authentication token not available. Please log in again.');
         }
+        const baseUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
         
         const res = await fetch(
-          `http://localhost:5000/api/career-recommendations/roadmaps/${userId}/${recommendationId}/${title}`,
+          `${baseUrl}/api/career-recommendations/roadmaps/${userId}/${recommendationId}/${title}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,

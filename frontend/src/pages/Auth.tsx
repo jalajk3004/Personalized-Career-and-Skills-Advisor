@@ -57,7 +57,8 @@ const Auth = () => {
 
       if (user.uid) {
         const token = await user.getIdToken();
-        await fetch("http://localhost:5000/api/users/me", {
+        const baseUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+        await fetch(`${baseUrl}/api/users/me`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

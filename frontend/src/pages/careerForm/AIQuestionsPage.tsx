@@ -29,17 +29,14 @@ const AIQuestionsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to load first
     if (authLoading) return;
     
-    // Only proceed if we have a token (user is authenticated)
     if (!token) {
       setError('Authentication required to load AI questions');
       setLoading(false);
       return;
     }
     
-    // Load questions with authentication
     loadAIQuestions();
   }, [authLoading, token, recommendationId]);
 
@@ -53,7 +50,9 @@ const AIQuestionsPage = () => {
         'Authorization': `Bearer ${token}`
       };
       
-      const res = await fetch(`http://localhost:5000/api/career-recommendations/ai-questions/${recommendationId}`, {
+      const baseurl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+      
+      const res = await fetch(`${baseurl}/api/career-recommendations/ai-questions/${recommendationId}`, {
         headers
       });
 
@@ -93,14 +92,13 @@ const AIQuestionsPage = () => {
         throw new Error('Authentication token is required');
       }
 
-      // Format answers for submission
       const aiAnswers: AIAnswer[] = questions.map(question => ({
         question: question.question_text,
         answer: answers[question.id] || '',
         category: question.category
       }));
-
-      const res = await fetch('http://localhost:5000/api/career-recommendations/ai-answers', {
+      const baseurl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+      const res = await fetch(`${baseurl}/api/career-recommendations/ai-answers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +115,6 @@ const AIQuestionsPage = () => {
       const result = await res.json();
       
       if (result.success) {
-        // Navigate to final recommendations page
         navigate(`/career/${userId}/${recommendationId}/final-recommendations`);
       }
     } catch (err) {

@@ -42,8 +42,8 @@ export function AIQuestionsForm({ recommendationId, onAIAnswersReady }: AIQuesti
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`
       };
-      
-      const res = await fetch(`http://localhost:5000/api/career-recommendations/ai-questions/${recommendationId}`, {
+      const baseurl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+      const res = await fetch(`${baseurl}/api/career-recommendations/ai-questions/${recommendationId}`, {
         headers
       });
 

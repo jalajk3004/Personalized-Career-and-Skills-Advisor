@@ -106,11 +106,11 @@ const GetRecommendation: React.FC = () => {
 
       const token = await user.getIdToken();
       const baseUrl =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
       let url;
       if (userId && recommendationId) {
-        url = `${baseUrl}/career-recommendations/recommendations/${userId}/${recommendationId}`;
+        url = `${baseUrl}/api/career-recommendations/recommendations/${userId}/${recommendationId}`;
       } else {
         url = `${baseUrl}/career-recommendations/recommendations`;
       }

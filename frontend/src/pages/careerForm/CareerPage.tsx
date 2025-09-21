@@ -83,8 +83,9 @@ function CareerForm() {
       if (!token) {
         throw new Error("Authentication required");
       }
+      const baseurl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
-      const res = await fetch("http://localhost:5000/api/career-recommendations/ai-submit", {
+      const res = await fetch(`${baseurl}/api/career-recommendations/ai-submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -127,8 +128,9 @@ function CareerForm() {
             category: question ? question.category : 'ai_generated'
           };
         });
+      const baseurl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
-      const res = await fetch('http://localhost:5000/api/career-recommendations/ai-answers', {
+      const res = await fetch(`${baseurl}/api/career-recommendations/ai-answers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
