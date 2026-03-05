@@ -1,24 +1,11 @@
-import { Pool } from 'pg';
+import prisma from './prismaClient';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  
-});
-
-pool.on('connect', () => {
-  console.log('Connected to the database');
-});
-
 // Interfaces for type safety
-interface Question {
+export interface Question {
   question_id: number;
-  user_id?: number;
+  user_id?: number | null;
   question_text: string;
   question_type: string;
   options?: any;
@@ -28,15 +15,15 @@ interface Question {
   category: string;
 }
 
-interface Answer {
+export interface Answer {
   answer_id?: number;
   user_id: number;
   question_id: number;
-  answer_text?: string;
+  answer_text?: string | null;
   answer_json?: any;
 }
 
-interface FormSession {
+export interface FormSession {
   session_id?: number;
   user_id: number;
   current_step: number;
@@ -46,274 +33,260 @@ interface FormSession {
 }
 
 class FormService {
-  
+
   // =================== FORM SESSION METHODS ===================
-  
-  /**
-   * Get or create form session for user
-   */
+
   async getOrCreateFormSession(user_id: number): Promise<FormSession> {
     try {
-      // Try to get existing session
-      let result = await pool.query(
-        'SELECT * FROM form_sessions WHERE user_id = $1 AND is_completed = FALSE ORDER BY created_at DESC LIMIT 1',
-        [user_id]
-      );
-      
-      if (result.rows.length > 0) {
-        return result.rows[0];
+      let session = await prisma.form_sessions.findFirst({
+        where: { user_id, is_completed: false },
+        orderBy: { created_at: 'desc' }
+      });
+
+      if (session) {
+        return session as unknown as FormSession;
       }
-      
-      // Create new session
+
       const staticQuestionsCount = await this.getStaticQuestionsCount();
-      result = await pool.query(
-        `INSERT INTO form_sessions (user_id, current_step, total_steps, ai_questions_generated, is_completed) 
-         VALUES ($1, 1, $2, FALSE, FALSE) RETURNING *`,
-        [user_id, staticQuestionsCount]
-      );
-      
-      return result.rows[0];
+      const newSession = await prisma.form_sessions.create({
+        data: {
+          user_id,
+          current_step: 1,
+          total_steps: staticQuestionsCount,
+          ai_questions_generated: false,
+          is_completed: false
+        }
+      });
+
+      return newSession as unknown as FormSession;
     } catch (error) {
       console.error('Error in getOrCreateFormSession:', error);
       throw error;
     }
   }
-  
-  /**
-   * Update form session
-   */
+
   async updateFormSession(user_id: number, updates: Partial<FormSession>): Promise<FormSession> {
-    const setClause = Object.keys(updates)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(', ');
-    
-    const values = [user_id, ...Object.values(updates)];
-    
-    const result = await pool.query(
-      `UPDATE form_sessions SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
-       WHERE user_id = $1 AND is_completed = FALSE RETURNING *`,
-      values
-    );
-    
-    return result.rows[0];
-  }
-  
-  // =================== QUESTION METHODS ===================
-  
-  /**
-   * Get static questions (predefined questions)
-   */
-  async getStaticQuestions(): Promise<Question[]> {
-    const result = await pool.query(
-      'SELECT * FROM form_questions WHERE is_ai_generated = FALSE ORDER BY order_sequence'
-    );
-    return result.rows;
-  }
-  
-  /**
-   * Get count of static questions
-   */
-  async getStaticQuestionsCount(): Promise<number> {
-    const result = await pool.query(
-      'SELECT COUNT(*) as count FROM form_questions WHERE is_ai_generated = FALSE'
-    );
-    return parseInt(result.rows[0].count);
-  }
-  
-  /**
-   * Get AI-generated questions for a user
-   */
-  async getAIQuestions(user_id: number): Promise<Question[]> {
-    const result = await pool.query(
-      'SELECT * FROM form_questions WHERE user_id = $1 AND is_ai_generated = TRUE ORDER BY order_sequence',
-      [user_id]
-    );
-    return result.rows;
-  }
-  
-  /**
-   * Get all questions for a user (static + AI)
-   */
-  async getAllQuestionsForUser(user_id: number): Promise<Question[]> {
-    const result = await pool.query(
-      `SELECT * FROM form_questions 
-       WHERE (is_ai_generated = FALSE) OR (user_id = $1 AND is_ai_generated = TRUE)
-       ORDER BY order_sequence`,
-      [user_id]
-    );
-    return result.rows;
-  }
-  
-  /**
-   * Get single question by ID
-   */
-  async getQuestionById(question_id: number): Promise<Question | null> {
-    const result = await pool.query(
-      'SELECT * FROM form_questions WHERE question_id = $1',
-      [question_id]
-    );
-    return result.rows[0] || null;
-  }
-  
-  /**
-   * Get questions for current step
-   */
-  async getQuestionsForStep(user_id: number, step: number, questionsPerStep: number = 3): Promise<Question[]> {
-    const offset = (step - 1) * questionsPerStep;
-    
-    const result = await pool.query(
-      `SELECT * FROM form_questions 
-       WHERE (is_ai_generated = FALSE) OR (user_id = $1 AND is_ai_generated = TRUE)
-       ORDER BY order_sequence
-       LIMIT $2 OFFSET $3`,
-      [user_id, questionsPerStep, offset]
-    );
-    return result.rows;
-  }
-  
-  /**
-   * Save AI-generated questions for a user
-   */
-  async saveAIQuestions(user_id: number, questions: any[]): Promise<Question[]> {
-    const client = await pool.connect();
-    
-    try {
-      await client.query('BEGIN');
-      
-      const savedQuestions: Question[] = [];
-      
-      // Get the highest order_sequence to continue numbering
-      const maxOrderResult = await client.query(
-        'SELECT COALESCE(MAX(order_sequence), 0) as max_order FROM form_questions'
-      );
-      let nextOrder = maxOrderResult.rows[0].max_order + 1;
-      
-      for (const question of questions) {
-        const result = await client.query(
-          `INSERT INTO form_questions 
-           (user_id, question_text, question_type, options, is_ai_generated, order_sequence, is_required, category)
-           VALUES ($1, $2, $3, $4, TRUE, $5, $6, $7)
-           RETURNING *`,
-          [
-            user_id,
-            question.question_text,
-            question.question_type,
-            JSON.stringify(question.options || null),
-            nextOrder++,
-            question.is_required,
-            question.category
-          ]
-        );
-        savedQuestions.push(result.rows[0]);
+    const session = await prisma.form_sessions.findFirst({
+      where: { user_id, is_completed: false },
+      orderBy: { created_at: 'desc' }
+    });
+
+    if (!session) throw new Error("No active session found");
+
+    const updated = await prisma.form_sessions.update({
+      where: { session_id: session.session_id },
+      data: {
+        current_step: updates.current_step,
+        total_steps: updates.total_steps,
+        ai_questions_generated: updates.ai_questions_generated,
+        is_completed: updates.is_completed,
+        updated_at: new Date()
       }
-      
-      await client.query('COMMIT');
-      return savedQuestions;
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
+
+    return updated as unknown as FormSession;
   }
-  
+
+  // =================== QUESTION METHODS ===================
+
+  async getStaticQuestions(): Promise<Question[]> {
+    const questions = await prisma.form_questions.findMany({
+      where: { is_ai_generated: false },
+      orderBy: { order_sequence: 'asc' }
+    });
+    return questions as unknown as Question[];
+  }
+
+  async getStaticQuestionsCount(): Promise<number> {
+    return await prisma.form_questions.count({
+      where: { is_ai_generated: false }
+    });
+  }
+
+  async getAIQuestions(user_id: number): Promise<Question[]> {
+    const questions = await prisma.form_questions.findMany({
+      where: { user_id, is_ai_generated: true },
+      orderBy: { order_sequence: 'asc' }
+    });
+    return questions as unknown as Question[];
+  }
+
+  async getAllQuestionsForUser(user_id: number): Promise<Question[]> {
+    const questions = await prisma.form_questions.findMany({
+      where: {
+        OR: [
+          { is_ai_generated: false },
+          { user_id, is_ai_generated: true }
+        ]
+      },
+      orderBy: { order_sequence: 'asc' }
+    });
+    return questions as unknown as Question[];
+  }
+
+  async getQuestionById(question_id: number): Promise<Question | null> {
+    const question = await prisma.form_questions.findUnique({
+      where: { question_id }
+    });
+    return question as unknown as Question | null;
+  }
+
+  async getQuestionsForStep(user_id: number, step: number, questionsPerStep: number = 3): Promise<Question[]> {
+    const skip = (step - 1) * questionsPerStep;
+    const questions = await prisma.form_questions.findMany({
+      where: {
+        OR: [
+          { is_ai_generated: false },
+          { user_id, is_ai_generated: true }
+        ]
+      },
+      orderBy: { order_sequence: 'asc' },
+      skip,
+      take: questionsPerStep
+    });
+    return questions as unknown as Question[];
+  }
+
+  async saveAIQuestions(user_id: number, questions: any[]): Promise<Question[]> {
+    return await prisma.$transaction(async (tx: any) => {
+      const maxOrder = await tx.form_questions.aggregate({
+        _max: { order_sequence: true }
+      });
+      let nextOrder = (maxOrder._max.order_sequence || 0) + 1;
+
+      const savedQuestions = [];
+      for (const question of questions) {
+        const saved = await tx.form_questions.create({
+          data: {
+            user_id,
+            question_text: question.question_text,
+            question_type: question.question_type,
+            options: question.options || null,
+            is_ai_generated: true,
+            order_sequence: nextOrder++,
+            is_required: question.is_required ?? true,
+            category: question.category
+          }
+        });
+        savedQuestions.push(saved);
+      }
+      return savedQuestions as unknown as Question[];
+    });
+  }
+
   // =================== ANSWER METHODS ===================
-  
-  /**
-   * Save user answer
-   */
+
   async saveAnswer(answer: Answer): Promise<Answer> {
-    const result = await pool.query(
-      `INSERT INTO form_answers (user_id, question_id, answer_text, answer_json)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, question_id) 
-       DO UPDATE SET answer_text = $3, answer_json = $4, updated_at = CURRENT_TIMESTAMP
-       RETURNING *`,
-      [answer.user_id, answer.question_id, answer.answer_text, answer.answer_json]
-    );
-    return result.rows[0];
+    const saved = await prisma.form_answers.upsert({
+      where: {
+        user_id_question_id: {
+          user_id: answer.user_id,
+          question_id: answer.question_id
+        }
+      },
+      update: {
+        answer_text: answer.answer_text,
+        answer_json: answer.answer_json,
+        updated_at: new Date()
+      },
+      create: {
+        user_id: answer.user_id,
+        question_id: answer.question_id,
+        answer_text: answer.answer_text,
+        answer_json: answer.answer_json
+      }
+    });
+    return saved as unknown as Answer;
   }
-  
-  /**
-   * Get all answers for a user
-   */
+
   async getUserAnswers(user_id: number): Promise<Answer[]> {
-    const result = await pool.query(
-      'SELECT * FROM form_answers WHERE user_id = $1 ORDER BY created_at',
-      [user_id]
-    );
-    return result.rows;
+    const answers = await prisma.form_answers.findMany({
+      where: { user_id },
+      orderBy: { created_at: 'asc' }
+    });
+    return answers as unknown as Answer[];
   }
-  
-  /**
-   * Get answers with questions (for AI context)
-   */
+
   async getAnswersWithQuestions(user_id: number): Promise<any[]> {
-    const result = await pool.query(
-      `SELECT 
-         fa.answer_text, fa.answer_json,
-         fq.question_text, fq.category, fq.question_type
-       FROM form_answers fa
-       JOIN form_questions fq ON fa.question_id = fq.question_id
-       WHERE fa.user_id = $1
-       ORDER BY fq.order_sequence`,
-      [user_id]
-    );
-    return result.rows;
+    const answers = await prisma.form_answers.findMany({
+      where: { user_id },
+      include: {
+        form_questions: true
+      },
+      orderBy: {
+        form_questions: {
+          order_sequence: 'asc'
+        }
+      }
+    });
+
+    return answers.map((a: any) => ({
+      answer_text: a.answer_text,
+      answer_json: a.answer_json,
+      question_text: a.form_questions.question_text,
+      category: a.form_questions.category,
+      question_type: a.form_questions.question_type
+    }));
   }
-  
-  /**
-   * Get static questions answered by user (for AI generation)
-   */
+
   async getStaticAnswersForAI(user_id: number): Promise<any[]> {
-    const result = await pool.query(
-      `SELECT 
-         fa.answer_text, fa.answer_json,
-         fq.question_text, fq.category, fq.question_type
-       FROM form_answers fa
-       JOIN form_questions fq ON fa.question_id = fq.question_id
-       WHERE fa.user_id = $1 AND fq.is_ai_generated = FALSE
-       ORDER BY fq.order_sequence`,
-      [user_id]
-    );
-    return result.rows;
+    const answers = await prisma.form_answers.findMany({
+      where: {
+        user_id,
+        form_questions: { is_ai_generated: false }
+      },
+      include: {
+        form_questions: true
+      },
+      orderBy: {
+        form_questions: {
+          order_sequence: 'asc'
+        }
+      }
+    });
+
+    return answers.map((a: any) => ({
+      answer_text: a.answer_text,
+      answer_json: a.answer_json,
+      question_text: a.form_questions.question_text,
+      category: a.form_questions.category,
+      question_type: a.form_questions.question_type
+    }));
   }
-  
-  /**
-   * Check if user has answered all static questions
-   */
+
   async hasCompletedStaticQuestions(user_id: number): Promise<boolean> {
     const staticCount = await this.getStaticQuestionsCount();
-    
-    const result = await pool.query(
-      `SELECT COUNT(*) as answered_count
-       FROM form_answers fa
-       JOIN form_questions fq ON fa.question_id = fq.question_id
-       WHERE fa.user_id = $1 AND fq.is_ai_generated = FALSE`,
-      [user_id]
-    );
-    
-    const answeredCount = parseInt(result.rows[0].answered_count);
+    const answeredCount = await prisma.form_answers.count({
+      where: {
+        user_id,
+        form_questions: { is_ai_generated: false }
+      }
+    });
     return answeredCount >= staticCount;
   }
-  
-  /**
-   * Get user progress
-   */
+
   async getUserProgress(user_id: number): Promise<any> {
     const session = await this.getOrCreateFormSession(user_id);
-    const totalQuestions = await this.getAllQuestionsForUser(user_id);
-    const answers = await this.getUserAnswers(user_id);
-    
+    const totalQuestionsCount = await prisma.form_questions.count({
+      where: {
+        OR: [
+          { is_ai_generated: false },
+          { user_id, is_ai_generated: true }
+        ]
+      }
+    });
+    const answersCount = await prisma.form_answers.count({
+      where: { user_id }
+    });
+
     return {
       current_step: session.current_step,
       total_steps: session.total_steps,
-      questions_answered: answers.length,
-      total_questions: totalQuestions.length,
+      questions_answered: answersCount,
+      total_questions: totalQuestionsCount,
       ai_questions_generated: session.ai_questions_generated,
       is_completed: session.is_completed,
-      progress_percentage: Math.round((answers.length / Math.max(totalQuestions.length, 1)) * 100)
+      progress_percentage: Math.round((answersCount / Math.max(totalQuestionsCount, 1)) * 100)
     };
   }
 }
@@ -322,98 +295,97 @@ export const formService = new FormService();
 
 // =================== CAREER OPTIONS METHODS ===================
 
-interface CareerOption {
+export interface CareerOption {
   career_id?: number;
   name: string;
   description: string;
-  salary_range_min: number;
-  salary_range_max: number;
-  currency: string;
+  salary_range_min: number | null;
+  salary_range_max: number | null;
+  currency: string | null;
   required_skills: string[];
-  growth_rate: number;
-  user_id?: number;
+  growth_rate: any | null;
+  user_id?: number | null;
 }
 
 class CareerOptionsService {
-  
-  /**
-   * Save multiple career options for a user
-   */
   async saveCareerOptions(userId: number, careerOptions: any[]): Promise<CareerOption[]> {
-    const client = await pool.connect();
-    
-    try {
-      await client.query('BEGIN');
-      
-      // First, delete existing career options for this user
-      await client.query('DELETE FROM career_options WHERE user_id = $1', [userId]);
-      
-      const savedCareerOptions: CareerOption[] = [];
-      
+    return await prisma.$transaction(async (tx: any) => {
+      await tx.career_options.deleteMany({
+        where: { user_id: userId }
+      });
+
+      const savedOptions = [];
       for (const option of careerOptions) {
-        const result = await client.query(
-          `INSERT INTO career_options 
-           (name, description, salary_range_min, salary_range_max, currency, required_skills, growth_rate, user_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING *`,
-          [
-            option.name,
-            option.description,
-            option.salary_range_min,
-            option.salary_range_max,
-            option.currency || 'INR',
-            option.required_skills,
-            option.growth_rate,
-            userId
-          ]
-        );
-        savedCareerOptions.push(result.rows[0]);
+        const saved = await tx.career_options.create({
+          data: {
+            name: option.name,
+            description: option.description,
+            salary_range_min: option.salary_range_min,
+            salary_range_max: option.salary_range_max,
+            currency: option.currency || 'INR',
+            required_skills: option.required_skills,
+            growth_rate: option.growth_rate,
+            user_id: userId
+          }
+        });
+        savedOptions.push(saved);
       }
-      
-      await client.query('COMMIT');
-      return savedCareerOptions;
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+      return savedOptions as unknown as CareerOption[];
+    });
   }
-  
-  /**
-   * Get career options for a user
-   */
+
   async getCareerOptionsForUser(userId: number): Promise<CareerOption[]> {
-    const result = await pool.query(
-      'SELECT * FROM career_options WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
-    );
-    return result.rows;
+    const options = await prisma.career_options.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' }
+    });
+    return options as unknown as CareerOption[];
   }
-  
-  /**
-   * Get career option by ID
-   */
+
   async getCareerOptionById(careerId: number): Promise<CareerOption | null> {
-    const result = await pool.query(
-      'SELECT * FROM career_options WHERE career_id = $1',
-      [careerId]
-    );
-    return result.rows[0] || null;
+    const option = await prisma.career_options.findUnique({
+      where: { career_id: careerId }
+    });
+    return option as unknown as CareerOption | null;
   }
-  
-  /**
-   * Check if user has career options generated
-   */
+
   async hasCareerOptions(userId: number): Promise<boolean> {
-    const result = await pool.query(
-      'SELECT COUNT(*) as count FROM career_options WHERE user_id = $1',
-      [userId]
-    );
-    return parseInt(result.rows[0].count) > 0;
+    const count = await prisma.career_options.count({
+      where: { user_id: userId }
+    });
+    return count > 0;
   }
 }
 
 export const careerOptionsService = new CareerOptionsService();
+
+// Mock pool object for backward compatibility
+export const pool = {
+  query: async (text: string, params?: any[]) => {
+    try {
+      if (text.trim().toLowerCase().startsWith('select current_database()')) {
+        const res = await prisma.$queryRawUnsafe<{ current_database: string }[]>(text);
+        return { rows: res };
+      }
+      const res = await prisma.$queryRawUnsafe<any[]>(text, ...(params || []));
+      return { rows: res };
+    } catch (error: any) {
+      console.error('❌ Error in mock pool.query:');
+      console.error('Query:', text);
+      console.error('Params:', params);
+      console.error('Error:', error);
+      throw error;
+    }
+  },
+  connect: async () => {
+    return {
+      query: async (text: string, params?: any[]) => {
+        const res = await prisma.$queryRawUnsafe<any[]>(text, ...(params || []));
+        return { rows: res };
+      },
+      release: () => { }
+    };
+  }
+};
+
 export default pool;

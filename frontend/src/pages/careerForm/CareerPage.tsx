@@ -35,12 +35,12 @@ function CareerForm() {
   const [isSubmittingInitialForm, setIsSubmittingInitialForm] = useState(false);
   const [isSubmittingFinalForm, setIsSubmittingFinalForm] = useState(false);
   const { token } = useAuth();
-  
+
   const handleAIAnswersReady = (answers: Record<string, string>, questions: any[]) => {
     setAiAnswers(answers);
     setAiQuestions(questions);
   };
-  
+
   function updateFields(fields: Partial<FormData>) {
     setData(prev => {
       return { ...prev, ...fields }
@@ -53,33 +53,33 @@ function CareerForm() {
     <WorkExperience {...data} updateFields={updateFields} />,
     <SkillForm {...data} updateFields={updateFields} />,
     ...(recommendationId ? [
-      <AIQuestionsForm 
-        recommendationId={recommendationId} 
+      <AIQuestionsForm
+        recommendationId={recommendationId}
         onAIAnswersReady={handleAIAnswersReady}
       />
     ] : []),
   ];
 
   const { currentStepIndex, step, isFirstStep, isLastStep, back, next } =
-      useMultistepForm(steps)
+    useMultistepForm(steps)
 
   function onSubmit(e: FormEvent) {
-      e.preventDefault()
-      
-      if (currentStepIndex === 3 && !recommendationId) {
-        handleInitialSubmit()
-        return
-      }
-      
-      if (!isLastStep) return next()
-      
-      handleFinalSubmit()
+    e.preventDefault()
+
+    if (currentStepIndex === 3 && !recommendationId) {
+      handleInitialSubmit()
+      return
+    }
+
+    if (!isLastStep) return next()
+
+    handleFinalSubmit()
   }
 
   const handleInitialSubmit = async () => {
     try {
       setIsSubmittingInitialForm(true);
-      
+
       if (!token) {
         throw new Error("Authentication required");
       }
@@ -96,12 +96,12 @@ function CareerForm() {
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to submit form");
-      
+
       setRecommendationId(result.recommendation_id);
       setUserId(result.user_id);
-      
+
       next();
-      
+
     } catch (err) {
       console.error("Error submitting initial form:", err);
       alert("Error submitting form. Please try again.");
@@ -144,12 +144,12 @@ function CareerForm() {
 
       const result = await res.json();
       if (!res.ok) throw new Error('Failed to submit AI answers');
-      
+
       if (result.success) {
         const finalUserId = result.data.user_id || userId;
         window.location.href = `/career/${finalUserId}/${recommendationId}`;
       }
-      
+
     } catch (err) {
       console.error("Error submitting final answers:", err);
       alert("Error submitting answers. Please try again.");
@@ -160,45 +160,44 @@ function CareerForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-8 px-4">
-   
-      {isSubmittingFinalForm && (
-  <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
-    <div className="flex flex-col items-center space-y-6">
-      {/* Pulse background circle */}
-      <div className="relative">
-        <div className="absolute inset-0 rounded-full bg-blue-200 opacity-50 animate-ping"></div>
-        <svg
-          className="animate-spin h-14 w-14 text-blue-600 relative z-10"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 
-              0 5.373 0 12h4zm2 5.291A7.962 
-              7.962 0 714 12H0c0 3.042 1.135 
-              5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-      </div>
 
-      {/* Loader Text */}
-      <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse">
-        Fetching your Career Paths...
-      </p>
-    </div>
-  </div>
-)}
+      {isSubmittingFinalForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+          <div className="flex flex-col items-center space-y-6">
+            {/* Pulse background circle */}
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-blue-200 opacity-50 animate-ping"></div>
+              <svg
+                className="animate-spin h-14 w-14 text-blue-600 relative z-10"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 
+              0 5.373 0 12h4zm2 5.291A7.962 
+              7.962 0 0 1 12 20c4.418 0 8-3.582 8-8h-4c0 2.21-1.79 4-4 4s-4-1.79-4-4H4z"
+                ></path>
+              </svg>
+            </div>
+
+            {/* Loader Text */}
+            <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse">
+              Fetching your Career Paths...
+            </p>
+          </div>
+        </div>
+      )}
 
 
       <div className="w-full max-w-6xl mx-auto">
@@ -209,14 +208,14 @@ function CareerForm() {
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             Help us understand your background and aspirations to provide personalized career recommendations
           </p>
-          
+
           <div className="max-w-md mx-auto mt-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">Progress</span>
               <span className="text-sm font-medium text-blue-600">{currentStepIndex + 1} of {steps.length}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
               ></div>
@@ -239,12 +238,12 @@ function CareerForm() {
               {step}
             </div>
           </div>
-          
+
           <div className="flex justify-center">
             <div className="flex items-center space-x-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
               {!isFirstStep ? (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={back}
                   className="flex items-center px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md group"
                 >
@@ -256,23 +255,22 @@ function CareerForm() {
               ) : (
                 <div className="w-[100px]"></div>
               )}
-              
+
               <div className="flex space-x-1">
                 {steps.map((_, index) => (
                   <div
                     key={index}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === currentStepIndex
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentStepIndex
                         ? 'bg-blue-600 scale-125'
                         : index < currentStepIndex
-                        ? 'bg-green-500'
-                        : 'bg-gray-300'
-                    }`}
+                          ? 'bg-green-500'
+                          : 'bg-gray-300'
+                      }`}
                   />
                 ))}
               </div>
-              
-              <button 
+
+              <button
                 type="submit"
                 disabled={isSubmittingInitialForm || isSubmittingFinalForm}
                 className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
@@ -281,7 +279,7 @@ function CareerForm() {
                   <>
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 12 20c4.418 0 8-3.582 8-8h-4c0 2.21-1.79 4-4 4s-4-1.79-4-4H4z"></path>
                     </svg>
                     Processing...
                   </>

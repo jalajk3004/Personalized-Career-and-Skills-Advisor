@@ -22,7 +22,12 @@ const dbServices_1 = __importDefault(require("./services/dbServices"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: true }));
 app.use(express_1.default.json());
-// server.js (temporary debugging code)
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    next();
+});
 app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield dbServices_1.default.query("SELECT current_database()");
     res.json(`the databsae is :${result.rows[0].current_database}`);

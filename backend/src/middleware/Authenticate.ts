@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import admin from "../config/firebase-admin.js";
+import jwt from "jsonwebtoken";
 
 // Extend the Request interface inline
 interface AuthenticatedRequest extends Request {
-  user?: admin.auth.DecodedIdToken;
+  user?: any;
 }
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-prod';
 
 export async function authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -12,14 +14,14 @@ export async function authenticate(req: AuthenticatedRequest, res: Response, nex
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const idToken = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1];
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken; 
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+    req.user = decodedToken;
     next();
   } catch (err) {
-    console.error("Firebase token verification error:", err);
-    res.status(401).json({ message: "Unauthorized" });
+    console.error("JWT verification error:", err);
+    res.status(401).json({ message: "Unauthorized - Invalid Token" });
   }
 }

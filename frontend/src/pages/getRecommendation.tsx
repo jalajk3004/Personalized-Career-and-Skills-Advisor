@@ -18,8 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { auth } from "../config/firebase";
 import CareerModal from "@/components/careerModal";
+import { useAuth } from "@/AuthContext";
 
 // Types
 interface CareerOption {
@@ -59,6 +59,7 @@ const GetRecommendation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasRecommendations, setHasRecommendations] = useState(false);
+  const { user, token, loading: authConfigLoading } = useAuth();
   const [authLoading, setAuthLoading] = useState(true);
 
   // Modal
@@ -87,39 +88,37 @@ const GetRecommendation: React.FC = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (!authConfigLoading) {
       setAuthLoading(false);
-      if (user) {
-        fetchRecommendations(user);
+      if (user && token) {
+        fetchRecommendations(token);
       } else {
         setError("Please sign in to view your career recommendations");
         setLoading(false);
       }
-    });
-    return () => unsubscribe();
-  }, [userId, recommendationId]);
+    }
+  }, [userId, recommendationId, user, token, authConfigLoading]);
 
-  const fetchRecommendations = async (user: any) => {
+  const fetchRecommendations = async (authToken: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = await user.getIdToken();
       const baseUrl =
-        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+        import.meta.env.VITE_REACT_SERVER_URL || "http://localhost:5000";
 
       let url;
       if (userId && recommendationId) {
         url = `${baseUrl}/api/career-recommendations/recommendations/${userId}/${recommendationId}`;
       } else {
-        url = `${baseUrl}/career-recommendations/recommendations`;
+        url = `${baseUrl}/api/career-recommendations/recommendations`;
       }
 
       const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -345,13 +344,13 @@ const CareerCard: React.FC<CareerCardProps> = ({ career, onLearnMore }) => {
               {((career.additional_skills_count || 0) > 0 ||
                 (!career.skills_display &&
                   (career.required_skills?.length || 0) > 4)) && (
-                <Badge variant="outline" className="text-xs text-gray-500">
-                  +
-                  {career.additional_skills_count ||
-                    (career.required_skills.length - 4)}{" "}
-                  more
-                </Badge>
-              )}
+                  <Badge variant="outline" className="text-xs text-gray-500">
+                    +
+                    {career.additional_skills_count ||
+                      (career.required_skills.length - 4)}{" "}
+                    more
+                  </Badge>
+                )}
             </div>
           </div>
           <Button

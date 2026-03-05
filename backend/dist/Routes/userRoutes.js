@@ -13,31 +13,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const Authenticate_js_1 = require("../middleware/Authenticate.js");
-const dbServices_js_1 = __importDefault(require("../services/dbServices.js"));
+const authController_1 = require("../controllers/authController");
+const dbServices_1 = __importDefault(require("../services/dbServices"));
+const Authenticate_1 = require("../middleware/Authenticate");
 const router = express_1.default.Router();
-router.get("/me", Authenticate_js_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Auth Endpoints
+router.post("/register", authController_1.register);
+router.post("/login", authController_1.login);
+router.post("/google", authController_1.googleLogin);
+// Protected user routes
+router.get("/me", Authenticate_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
     }
     const { email, uid } = req.user;
     try {
-        // 🟢 Insert into Postgres if user does not already exist
-        const query = `
-      INSERT INTO users (uid, email)
-      VALUES ($1, $2)
-      ON CONFLICT (uid) DO UPDATE 
-      SET email = EXCLUDED.email
-      RETURNING *;
-    `;
-        const result = yield dbServices_js_1.default.query(query, [uid, email]);
+        // The user should already exist from login/register, but we can return it.
+        const query = `SELECT * FROM users WHERE uid = $1`;
+        const result = yield dbServices_1.default.query(query, [uid]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
         res.json({
-            message: "User authenticated & saved in database ✅",
+            message: "User fetched successfully",
             user: result.rows[0],
         });
     }
     catch (error) {
-        console.error("Error saving user:", error);
+        console.error("Error fetching user:", error);
         res.status(500).json({ message: "Database error" });
     }
 }));

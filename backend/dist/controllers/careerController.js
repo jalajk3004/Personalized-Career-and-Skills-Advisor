@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const geminiService_1 = __importDefault(require("../services/geminiService"));
+const aiService_1 = __importDefault(require("../services/aiService"));
 const dbServices_1 = __importStar(require("../services/dbServices"));
 // Standalone function to generate AI questions from database data
 function generateAIQuestionsFromDB(dbData) {
@@ -71,7 +71,7 @@ function generateAIQuestionsFromDB(dbData) {
                 { question: "What is your preferred work environment?", answer: dbData.preferred_work_env, category: "preferences" }
             ].filter(qa => qa.answer && qa.answer.trim() !== ''); // Filter out empty answers
             // Generate AI questions using Gemini
-            const generatedQuestions = yield geminiService_1.default.generateFollowUpQuestions(qaContext, 5);
+            const generatedQuestions = yield aiService_1.default.generateFollowUpQuestions(qaContext, 5);
             // Convert to our format and add IDs
             return generatedQuestions.map((q, index) => ({
                 id: `ai_${Date.now()}_${index}`,
@@ -112,6 +112,7 @@ class CareerController {
                     return res.status(404).json({ error: "User not found" });
                 }
                 const user_id = userRes.rows[0].user_id;
+                const age = formData.age ? parseInt(String(formData.age)) : null;
                 // Save the static form data first (existing logic)
                 const insertRes = yield dbServices_1.default.query(`INSERT INTO career_recommendations (
           user_id, name, age, highschool_name, highschool_stream, 
@@ -125,22 +126,24 @@ class CareerController {
           $16
         )
         RETURNING recommendation_id`, [
-                    user_id, formData.name, formData.age, formData.highschool_name, formData.highschool_stream,
+                    user_id, formData.name, age, formData.highschool_name, formData.highschool_stream,
                     formData.college, formData.course_type, formData.course, formData.specialisation, formData.no_experience,
                     formData.job_title, formData.company_name, formData.duration, formData.skills, formData.interests,
                     formData.preferred_work_env
                 ]);
-                const recommendation_id = insertRes.rows[0].recommendation_id;
+                const recommendation_id = Number(insertRes.rows[0].recommendation_id);
                 // Generate AI questions based on the database data
                 try {
                     // Get the saved data from database to use as context
                     const savedDataRes = yield dbServices_1.default.query("SELECT * FROM career_recommendations WHERE recommendation_id = $1", [recommendation_id]);
                     const savedData = savedDataRes.rows[0];
                     const aiQuestions = yield generateAIQuestionsFromDB(savedData);
-                    // Store AI questions in the existing table as JSON
-                    yield dbServices_1.default.query(`UPDATE career_recommendations 
-           SET ai_questions = $1 
-           WHERE recommendation_id = $2`, [JSON.stringify(aiQuestions), recommendation_id]);
+                    // Store AI questions using Prisma Client directly to handle JSON correctly
+                    const prismaClient = (yield Promise.resolve().then(() => __importStar(require('../services/prismaClient')))).default;
+                    yield prismaClient.career_recommendations.update({
+                        where: { recommendation_id },
+                        data: { ai_questions: aiQuestions }
+                    });
                     res.status(201).json({
                         success: true,
                         message: "Form submitted and AI questions generated successfully! 🚀",
@@ -151,7 +154,8 @@ class CareerController {
                     });
                 }
                 catch (aiError) {
-                    console.error('AI question generation failed:', aiError);
+                    console.error('⚠️ AI question generation failed:', aiError);
+                    console.error('AI Error stack:', aiError === null || aiError === void 0 ? void 0 : aiError.stack);
                     // Still return success for the main form, but without AI questions
                     res.status(201).json({
                         success: true,
@@ -159,13 +163,18 @@ class CareerController {
                         user_id,
                         recommendation_id,
                         has_ai_questions: false,
-                        ai_error: "AI questions could not be generated"
+                        ai_error: (aiError === null || aiError === void 0 ? void 0 : aiError.message) || "AI questions could not be generated"
                     });
                 }
             }
             catch (error) {
-                console.error("Error in submitFormWithAI:", error);
-                res.status(500).json({ error: "Internal Server Error" });
+                console.error("❌ Error in submitFormWithAI:", error);
+                console.error('Error stack:', error === null || error === void 0 ? void 0 : error.stack);
+                res.status(500).json({
+                    error: "Internal Server Error",
+                    details: error === null || error === void 0 ? void 0 : error.message,
+                    stack: error === null || error === void 0 ? void 0 : error.stack
+                });
             }
         });
     }
@@ -177,7 +186,7 @@ class CareerController {
             // Convert form data to Q&A format for AI
             const qaContext = this.convertFormDataToQA(formData);
             // Generate AI questions using Gemini
-            const generatedQuestions = yield geminiService_1.default.generateFollowUpQuestions(qaContext, 5);
+            const generatedQuestions = yield aiService_1.default.generateFollowUpQuestions(qaContext, 5);
             // Convert to our format and add IDs
             return generatedQuestions.map((q, index) => ({
                 id: `ai_${Date.now()}_${index}`,
@@ -226,7 +235,11 @@ class CareerController {
                 if (userRes.rows.length === 0) {
                     return res.status(404).json({ message: "User not found" });
                 }
-                const result = yield dbServices_1.default.query("SELECT ai_questions FROM career_recommendations WHERE recommendation_id=$1 AND user_id=$2", [recommendationId, userRes.rows[0].user_id]);
+                const recId = parseInt(recommendationId);
+                if (isNaN(recId)) {
+                    return res.status(400).json({ error: "Invalid recommendation ID" });
+                }
+                const result = yield dbServices_1.default.query("SELECT ai_questions FROM career_recommendations WHERE recommendation_id=$1 AND user_id=$2", [recId, userRes.rows[0].user_id]);
                 if (result.rows.length === 0) {
                     return res.status(404).json({ message: "Recommendation not found" });
                 }
@@ -272,14 +285,22 @@ class CareerController {
             try {
                 const { uid } = req.user;
                 const { recommendationId, ai_answers } = req.body;
+                const recId = parseInt(recommendationId);
+                if (isNaN(recId)) {
+                    return res.status(400).json({ error: "Invalid recommendation ID" });
+                }
                 const userRes = yield dbServices_1.default.query("SELECT user_id FROM users WHERE uid=$1", [uid]);
                 if (userRes.rows.length === 0) {
                     return res.status(404).json({ message: "User not found" });
                 }
-                // Save AI answers
-                yield dbServices_1.default.query("UPDATE career_recommendations SET ai_answers = $1 WHERE recommendation_id = $2 AND user_id = $3", [JSON.stringify(ai_answers), recommendationId, userRes.rows[0].user_id]);
+                // Save AI answers using Prisma Client directly to handle JSON correctly
+                const prismaClient = (yield Promise.resolve().then(() => __importStar(require('../services/prismaClient')))).default;
+                yield prismaClient.career_recommendations.update({
+                    where: { recommendation_id: recId },
+                    data: { ai_answers: ai_answers }
+                });
                 // Get complete data for final recommendations
-                const recResult = yield dbServices_1.default.query("SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2", [recommendationId, userRes.rows[0].user_id]);
+                const recResult = yield dbServices_1.default.query("SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2", [recId, userRes.rows[0].user_id]);
                 if (recResult.rows.length === 0) {
                     return res.status(404).json({ message: "Recommendation not found" });
                 }
@@ -311,13 +332,16 @@ class CareerController {
                         category: ans.category || 'ai_generated'
                     }))
                 ];
-                const finalRecommendations = yield geminiService_1.default.generateCareerRecommendations(allQA);
+                const finalRecommendations = yield aiService_1.default.generateCareerRecommendations(allQA);
                 // Generate career options for database storage
-                const careerOptions = yield geminiService_1.default.generateCareerOptionsForDB(allQA, userRes.rows[0].user_id);
+                const careerOptions = yield aiService_1.default.generateCareerOptionsForDB(allQA, userRes.rows[0].user_id);
                 // Save career options to database
                 const savedCareerOptions = yield dbServices_1.careerOptionsService.saveCareerOptions(userRes.rows[0].user_id, careerOptions);
-                // Save final recommendations
-                yield dbServices_1.default.query("UPDATE career_recommendations SET final_recommendations = $1 WHERE recommendation_id = $2", [JSON.stringify(finalRecommendations), recommendationId]);
+                // Save final recommendations using Prisma Client directly to handle JSON correctly
+                yield prismaClient.career_recommendations.update({
+                    where: { recommendation_id: recId },
+                    data: { final_recommendations: finalRecommendations }
+                });
                 res.json({
                     success: true,
                     data: {
@@ -351,7 +375,13 @@ class CareerController {
                 const user_id = userRes.rows[0].user_id;
                 // Verify the user owns this recommendation (if recommendationId is provided)
                 if (recommendationId) {
-                    const recCheck = yield dbServices_1.default.query("SELECT user_id FROM career_recommendations WHERE recommendation_id = $1", [recommendationId]);
+                    const recId = parseInt(recommendationId);
+                    console.log('DEBUG: recommendationId:', recommendationId, 'type:', typeof recommendationId);
+                    console.log('DEBUG: recId:', recId, 'type:', typeof recId);
+                    if (isNaN(recId)) {
+                        return res.status(400).json({ error: "Invalid recommendation ID" });
+                    }
+                    const recCheck = yield dbServices_1.default.query("SELECT user_id FROM career_recommendations WHERE recommendation_id = $1", [recId]);
                     if (recCheck.rows.length === 0) {
                         return res.status(404).json({ message: "Recommendation not found" });
                     }
@@ -400,6 +430,8 @@ class CareerController {
      */
     formatSalary(min, max, currency = 'INR') {
         const formatNumber = (num) => {
+            if (num === null)
+                return '0';
             if (num >= 10000000)
                 return `${(num / 10000000).toFixed(1)}Cr`;
             if (num >= 100000)
@@ -408,7 +440,7 @@ class CareerController {
                 return `${(num / 1000).toFixed(0)}K`;
             return num.toString();
         };
-        return `${formatNumber(min)} - ${formatNumber(max)} ${currency}`;
+        return `${formatNumber(min)} - ${formatNumber(max)} ${currency || 'INR'}`;
     }
     /**
      * Format growth rate for display
@@ -430,8 +462,12 @@ class CareerController {
                     return res.status(404).json({ message: "User not found" });
                 }
                 const user_id = userRes.rows[0].user_id;
+                const recId = parseInt(recommendationId);
+                if (isNaN(recId)) {
+                    return res.status(400).json({ error: "Invalid recommendation ID" });
+                }
                 // Verify the user owns this recommendation
-                const recCheck = yield dbServices_1.default.query("SELECT user_id FROM career_recommendations WHERE recommendation_id = $1", [recommendationId]);
+                const recCheck = yield dbServices_1.default.query("SELECT user_id FROM career_recommendations WHERE recommendation_id = $1", [recId]);
                 if (recCheck.rows.length === 0) {
                     return res.status(404).json({ message: "Recommendation not found" });
                 }
@@ -439,7 +475,7 @@ class CareerController {
                     return res.status(403).json({ message: "Access denied" });
                 }
                 // Get user's career data for roadmap generation
-                const recResult = yield dbServices_1.default.query("SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2", [recommendationId, user_id]);
+                const recResult = yield dbServices_1.default.query("SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2", [recId, user_id]);
                 if (recResult.rows.length === 0) {
                     return res.status(404).json({ message: "Career data not found" });
                 }
@@ -482,7 +518,7 @@ class CareerController {
                 // Decode the career title from URL format, handling special characters
                 const careerTitle = title.replace(/-/g, ' ').replace(/_/g, '/').replace(/\b\w/g, l => l.toUpperCase());
                 // Generate roadmap using Gemini service
-                const roadmapData = yield geminiService_1.default.generateCareerRoadmap(careerTitle, userData, allAnswers);
+                const roadmapData = yield aiService_1.default.generateCareerRoadmap(careerTitle, userData, allAnswers);
                 // Transform backend format to frontend format
                 const transformedRoadmap = this.transformRoadmapForFrontend(roadmapData);
                 res.json({

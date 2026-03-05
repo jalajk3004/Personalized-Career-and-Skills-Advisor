@@ -13,22 +13,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authenticate = authenticate;
-const firebase_admin_js_1 = __importDefault(require("../config/firebase-admin.js"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-prod';
 function authenticate(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        const idToken = authHeader.split(" ")[1];
+        const token = authHeader.split(" ")[1];
         try {
-            const decodedToken = yield firebase_admin_js_1.default.auth().verifyIdToken(idToken);
+            const decodedToken = jsonwebtoken_1.default.verify(token, JWT_SECRET);
             req.user = decodedToken;
             next();
         }
         catch (err) {
-            console.error("Firebase token verification error:", err);
-            res.status(401).json({ message: "Unauthorized" });
+            console.error("JWT verification error:", err);
+            res.status(401).json({ message: "Unauthorized - Invalid Token" });
         }
     });
 }

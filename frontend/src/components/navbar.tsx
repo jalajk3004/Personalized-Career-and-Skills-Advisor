@@ -1,29 +1,25 @@
 
-import { auth } from "../config/firebase";
 import { useAuth } from "@/AuthContext";
 import { Link } from "react-scroll";
 
-
 const Navbar = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   if (loading) return <p>Loading...</p>;
 
   const handlesingout = async () => {
     try {
-      await auth.signOut();
-      
-
+      logout();
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
-   
 
-  return (  
+
+  return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white px-6 py-3 flex flex-col md:flex-row items-center justify-between">
-      
+
       {/* Logo */}
       <div className="shadow-md rounded-3xl px-2 py-1 flex items-center">
         <img src="/prosperia_1.svg" alt="Logo" className="w-20 h-15" />
@@ -37,19 +33,19 @@ const Navbar = () => {
           </li>
           <li className="hover:text-indigo-600 cursor-pointer transition">
             <Link to="aboutUs" spy={true} smooth={true} offset={-70} duration={500} >
-            About Us
+              About Us
             </Link>
           </li>
           <li className="hover:text-indigo-600 cursor-pointer transition">
             <Link to="howitworks" spy={true} smooth={true} offset={-70} duration={500} >
-            How It Works
+              How It Works
             </Link>
           </li>
           <li className="hover:text-indigo-600 cursor-pointer transition">
             <Link to="mapYourPath" spy={true} smooth={true} offset={-70} duration={500} >
-            Map Your Path
+              Map Your Path
             </Link>
-          
+
           </li>
         </ul>
       </div>
@@ -59,19 +55,19 @@ const Navbar = () => {
         {user ? (
           <><button onClick={handlesingout} className=" px-5 py-2 flex items-center rounded-3xl  text-white shadow-md transition">
 
-            {user.photoURL ? (
-                <img
-                src={user.photoURL}
+            {user.picture ? (
+              <img
+                src={user.picture}
                 alt="Profile"
                 className="w-8 h-8 rounded-full mr-2 object-cover border border-gray-300"
-                />
+              />
             ) : (
-                <div className="w-10 h-10 rounded-full mr-2 bg-gray-300 flex items-center justify-center text-white font-semibold">
-                {user.displayName?.charAt(0)}
+              <div className="w-10 h-10 rounded-full mr-2 bg-gray-300 flex items-center justify-center text-white font-semibold">
+                {(user.name || user.email)?.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className="text-gray-800 font-medium">{user.displayName}</span>
-            </button>
+            <span className="text-gray-800 font-medium">{user.name || user.email.split('@')[0]}</span>
+          </button>
           </>
         ) : (
           <a

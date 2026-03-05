@@ -18,20 +18,18 @@ interface SidebarProps {
 
 export default function Sidebar({ children }: SidebarProps) {
   const { expanded, toggleExpanded } = useSidebar();
-  const { user} = useAuth();
+  const { user } = useAuth();
 
   return (
-    <aside className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ${
-      expanded ? "w-64" : "w-16"
-    }`}>
+    <aside className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ${expanded ? "w-64" : "w-16"
+      }`}>
       <nav className="h-full flex flex-col bg-white border-r shadow-sm">
         {/* Logo + toggle */}
         <div className="p-4 pb-2 flex justify-between items-center">
           <img
             src="https://img.logoipsum.com/243.svg"
-            className={`overflow-hidden transition-all ${
-              expanded ? "w-32" : "w-0"
-            }`}
+            className={`overflow-hidden transition-all ${expanded ? "w-32" : "w-0"
+              }`}
             alt="logo"
           />
           <button
@@ -50,17 +48,16 @@ export default function Sidebar({ children }: SidebarProps) {
         {/* Footer user section */}
         <div className="border-t flex p-3">
           <img
-            src={user?.photoURL ?? undefined}
+            src={user?.picture ?? undefined}
             alt="user avatar"
             className="w-10 h-10 rounded-md"
           />
           <div
-            className={`flex justify-between items-center overflow-hidden transition-all ${
-              expanded ? "w-52 ml-3" : "w-0"
-            }`}
+            className={`flex justify-between items-center overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"
+              }`}
           >
             <div className="leading-4">
-              <h4 className="font-semibold">{user?.displayName}</h4>
+              <h4 className="font-semibold">{user?.name || user?.email?.split('@')[0]}</h4>
               <span className="text-xs text-gray-600">{user?.email}</span>
             </div>
             <MoreVertical size={20} />
@@ -90,28 +87,25 @@ export function SidebarItem({ icon, text, active, alert }: SidebarItemProps) {
         relative flex items-center py-2 px-3 my-1
         font-medium rounded-md cursor-pointer
         transition-colors group
-        ${
-          active
-            ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800"
-            : "hover:bg-indigo-50 text-gray-600"
+        ${active
+          ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800"
+          : "hover:bg-indigo-50 text-gray-600"
         }
       `}
     >
       {icon}
       <span
-  className={`whitespace-nowrap overflow-hidden transition-all ${
-    expanded ? "w-52 ml-3" : "w-0"
-  }`}
->
-  {expanded && text}
-</span>
+        className={`whitespace-nowrap overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"
+          }`}
+      >
+        {expanded && text}
+      </span>
 
 
       {alert && (
         <div
-          className={`absolute right-2 w-2 h-2 rounded bg-indigo-400 ${
-            expanded ? "" : "top-2"
-          }`}
+          className={`absolute right-2 w-2 h-2 rounded bg-indigo-400 ${expanded ? "" : "top-2"
+            }`}
         />
       )}
 

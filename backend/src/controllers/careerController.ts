@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import geminiService from '../services/geminiService';
+import aiService from '../services/aiService';
 import pool, { careerOptionsService } from '../services/dbServices';
 
 // Define AuthenticatedRequest interface
@@ -37,15 +37,15 @@ async function generateAIQuestionsFromDB(dbData: any): Promise<AIQuestion[]> {
       { question: "What are your interests?", answer: dbData.interests, category: "interests" },
       { question: "What is your preferred work environment?", answer: dbData.preferred_work_env, category: "preferences" }
     ].filter(qa => qa.answer && qa.answer.trim() !== ''); // Filter out empty answers
-    
-    
-    
+
+
+
     // Generate AI questions using Gemini
-    const generatedQuestions = await geminiService.generateFollowUpQuestions(qaContext, 5);
-    
-   
+    const generatedQuestions = await aiService.generateFollowUpQuestions(qaContext, 5);
+
+
     // Convert to our format and add IDs
-    return generatedQuestions.map((q, index) => ({
+    return generatedQuestions.map((q: any, index: number) => ({
       id: `ai_${Date.now()}_${index}`,
       question_text: q.question_text,
       question_type: q.question_type,
@@ -60,7 +60,7 @@ async function generateAIQuestionsFromDB(dbData: any): Promise<AIQuestion[]> {
 }
 
 class CareerController {
-  
+
   constructor() {
     // Bind all methods to maintain 'this' context
     this.submitFormWithAI = this.submitFormWithAI.bind(this);
@@ -71,7 +71,7 @@ class CareerController {
   }
 
   // =================== ENHANCED FORM SUBMISSION WITH AI ===================
-  
+
   /**
    * Enhanced form submission that generates AI questions after static form completion
    */
@@ -79,19 +79,21 @@ class CareerController {
     try {
       const { uid } = req.user!;
       const formData = req.body;
-      
+
       // Get user_id from users table
       const userRes = await pool.query(
         "SELECT user_id FROM users WHERE uid = $1",
         [uid]
       );
-      
+
       if (userRes.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       const user_id = userRes.rows[0].user_id;
-      
+
+      const age = formData.age ? parseInt(String(formData.age)) : null;
+
       // Save the static form data first (existing logic)
       const insertRes = await pool.query(
         `INSERT INTO career_recommendations (
@@ -107,15 +109,15 @@ class CareerController {
         )
         RETURNING recommendation_id`,
         [
-          user_id, formData.name, formData.age, formData.highschool_name, formData.highschool_stream,
+          user_id, formData.name, age, formData.highschool_name, formData.highschool_stream,
           formData.college, formData.course_type, formData.course, formData.specialisation, formData.no_experience,
           formData.job_title, formData.company_name, formData.duration, formData.skills, formData.interests,
           formData.preferred_work_env
         ]
       );
-      
-      const recommendation_id = insertRes.rows[0].recommendation_id;
-      
+
+      const recommendation_id = Number(insertRes.rows[0].recommendation_id);
+
       // Generate AI questions based on the database data
       try {
         // Get the saved data from database to use as context
@@ -123,18 +125,17 @@ class CareerController {
           "SELECT * FROM career_recommendations WHERE recommendation_id = $1",
           [recommendation_id]
         );
-        
+
         const savedData = savedDataRes.rows[0];
         const aiQuestions = await generateAIQuestionsFromDB(savedData);
-        
-        // Store AI questions in the existing table as JSON
-        await pool.query(
-          `UPDATE career_recommendations 
-           SET ai_questions = $1 
-           WHERE recommendation_id = $2`,
-          [JSON.stringify(aiQuestions), recommendation_id]
-        );
-        
+
+        // Store AI questions using Prisma Client directly to handle JSON correctly
+        const prismaClient = (await import('../services/prismaClient')).default;
+        await prismaClient.career_recommendations.update({
+          where: { recommendation_id },
+          data: { ai_questions: aiQuestions as any }
+        });
+
         res.status(201).json({
           success: true,
           message: "Form submitted and AI questions generated successfully! 🚀",
@@ -143,10 +144,11 @@ class CareerController {
           ai_questions: aiQuestions,
           has_ai_questions: true
         });
-        
-      } catch (aiError) {
-        console.error('AI question generation failed:', aiError);
-        
+
+      } catch (aiError: any) {
+        console.error('⚠️ AI question generation failed:', aiError);
+        console.error('AI Error stack:', aiError?.stack);
+
         // Still return success for the main form, but without AI questions
         res.status(201).json({
           success: true,
@@ -154,28 +156,33 @@ class CareerController {
           user_id,
           recommendation_id,
           has_ai_questions: false,
-          ai_error: "AI questions could not be generated"
+          ai_error: aiError?.message || "AI questions could not be generated"
         });
       }
-      
-    } catch (error) {
-      console.error("Error in submitFormWithAI:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+
+    } catch (error: any) {
+      console.error("❌ Error in submitFormWithAI:", error);
+      console.error('Error stack:', error?.stack);
+      res.status(500).json({
+        error: "Internal Server Error",
+        details: error?.message,
+        stack: error?.stack
+      });
     }
   }
-  
+
   /**
    * Generate AI questions based on form data
    */
   private async generateAIQuestions(formData: any): Promise<AIQuestion[]> {
     // Convert form data to Q&A format for AI
     const qaContext = this.convertFormDataToQA(formData);
-    
+
     // Generate AI questions using Gemini
-    const generatedQuestions = await geminiService.generateFollowUpQuestions(qaContext, 5);
-    
+    const generatedQuestions = await aiService.generateFollowUpQuestions(qaContext, 5);
+
     // Convert to our format and add IDs
-    return generatedQuestions.map((q, index) => ({
+    return generatedQuestions.map((q: any, index: number) => ({
       id: `ai_${Date.now()}_${index}`,
       question_text: q.question_text,
       question_type: q.question_type,
@@ -184,7 +191,7 @@ class CareerController {
       is_required: q.is_required
     }));
   }
-  
+
   /**
    * Convert form data to Q&A format for AI processing
    */
@@ -206,11 +213,11 @@ class CareerController {
       { question: "What are your interests?", answer: formData.interests, category: "interests" },
       { question: "What is your preferred work environment?", answer: formData.preferred_work_env, category: "preferences" }
     ];
-    
+
     // Filter out empty answers
     return qaMap.filter(qa => qa.answer && qa.answer.trim() !== '');
   }
-  
+
   /**
    * Get AI questions for a recommendation
    */
@@ -218,23 +225,28 @@ class CareerController {
     try {
       const { uid } = req.user!;
       const { recommendationId } = req.params;
-      
+
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid=$1", [uid]);
       if (userRes.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
+      const recId = parseInt(recommendationId);
+      if (isNaN(recId)) {
+        return res.status(400).json({ error: "Invalid recommendation ID" });
+      }
+
       const result = await pool.query(
         "SELECT ai_questions FROM career_recommendations WHERE recommendation_id=$1 AND user_id=$2",
-        [recommendationId, userRes.rows[0].user_id]
+        [recId, userRes.rows[0].user_id]
       );
-      
+
       if (result.rows.length === 0) {
         return res.status(404).json({ message: "Recommendation not found" });
       }
-      
+
       const aiQuestions = result.rows[0].ai_questions;
-      
+
       // Handle both string and object cases
       let parsedQuestions = [];
       if (aiQuestions) {
@@ -250,7 +262,7 @@ class CareerController {
           parsedQuestions = aiQuestions;
         }
       }
-      
+
       res.json({
         success: true,
         data: {
@@ -259,13 +271,13 @@ class CareerController {
           has_ai_questions: !!aiQuestions
         }
       });
-      
+
     } catch (error) {
       console.error("Error getting AI questions:", error);
       res.status(500).json({ error: "Failed to get AI questions" });
     }
   }
-  
+
   /**
    * Submit AI question answers and generate final recommendations
    */
@@ -273,30 +285,36 @@ class CareerController {
     try {
       const { uid } = req.user!;
       const { recommendationId, ai_answers } = req.body;
-      
+
+      const recId = parseInt(recommendationId);
+      if (isNaN(recId)) {
+        return res.status(400).json({ error: "Invalid recommendation ID" });
+      }
+
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid=$1", [uid]);
       if (userRes.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
       }
-      
-      // Save AI answers
-      await pool.query(
-        "UPDATE career_recommendations SET ai_answers = $1 WHERE recommendation_id = $2 AND user_id = $3",
-        [JSON.stringify(ai_answers), recommendationId, userRes.rows[0].user_id]
-      );
-      
+
+      // Save AI answers using Prisma Client directly to handle JSON correctly
+      const prismaClient = (await import('../services/prismaClient')).default;
+      await prismaClient.career_recommendations.update({
+        where: { recommendation_id: recId },
+        data: { ai_answers: ai_answers as any }
+      });
+
       // Get complete data for final recommendations
       const recResult = await pool.query(
         "SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2",
-        [recommendationId, userRes.rows[0].user_id]
+        [recId, userRes.rows[0].user_id]
       );
-      
+
       if (recResult.rows.length === 0) {
         return res.status(404).json({ message: "Recommendation not found" });
       }
-      
+
       const completeData = recResult.rows[0];
-      
+
       // Convert form data to QA format
       const formDataQA = [
         { question: "What is your name?", answer: completeData.name, category: "personal" },
@@ -315,7 +333,7 @@ class CareerController {
         { question: "What are your interests?", answer: completeData.interests, category: "interests" },
         { question: "What is your preferred work environment?", answer: completeData.preferred_work_env, category: "preferences" }
       ].filter(qa => qa.answer && qa.answer.trim() !== '');
-      
+
       // Generate final AI recommendations
       const allQA = [
         ...formDataQA,
@@ -325,21 +343,21 @@ class CareerController {
           category: ans.category || 'ai_generated'
         }))
       ];
-      
-      const finalRecommendations = await geminiService.generateCareerRecommendations(allQA);
-      
+
+      const finalRecommendations = await aiService.generateCareerRecommendations(allQA);
+
       // Generate career options for database storage
-      const careerOptions = await geminiService.generateCareerOptionsForDB(allQA, userRes.rows[0].user_id);
-      
+      const careerOptions = await aiService.generateCareerOptionsForDB(allQA, userRes.rows[0].user_id);
+
       // Save career options to database
       const savedCareerOptions = await careerOptionsService.saveCareerOptions(userRes.rows[0].user_id, careerOptions);
-      
-      // Save final recommendations
-      await pool.query(
-        "UPDATE career_recommendations SET final_recommendations = $1 WHERE recommendation_id = $2",
-        [JSON.stringify(finalRecommendations), recommendationId]
-      );
-      
+
+      // Save final recommendations using Prisma Client directly to handle JSON correctly
+      await prismaClient.career_recommendations.update({
+        where: { recommendation_id: recId },
+        data: { final_recommendations: finalRecommendations as any }
+      });
+
       res.json({
         success: true,
         data: {
@@ -350,7 +368,7 @@ class CareerController {
           career_options_count: savedCareerOptions.length
         }
       });
-      
+
     } catch (error) {
       console.error("Error submitting AI answers:", error);
       res.status(500).json({ error: "Failed to submit AI answers" });
@@ -362,44 +380,50 @@ class CareerController {
    */
   async getCareerRecommendations(req: AuthenticatedRequest, res: Response) {
     try {
-      
+
       const { uid } = req.user!;
       const { userId, recommendationId } = req.params;
-      
-      
-      
+
+
+
       // Get user_id from users table
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
-      
+
       if (userRes.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const user_id = userRes.rows[0].user_id;
-      
-      
+
+
       // Verify the user owns this recommendation (if recommendationId is provided)
       if (recommendationId) {
+        const recId = parseInt(recommendationId);
+        console.log('DEBUG: recommendationId:', recommendationId, 'type:', typeof recommendationId);
+        console.log('DEBUG: recId:', recId, 'type:', typeof recId);
+        if (isNaN(recId)) {
+          return res.status(400).json({ error: "Invalid recommendation ID" });
+        }
         const recCheck = await pool.query(
           "SELECT user_id FROM career_recommendations WHERE recommendation_id = $1",
-          [recommendationId]
+          [recId]
         );
-        
+
         if (recCheck.rows.length === 0) {
           return res.status(404).json({ message: "Recommendation not found" });
         }
-        
+
         if (recCheck.rows[0].user_id !== user_id) {
           return res.status(403).json({ message: "Access denied" });
         }
       }
-      
-      
+
+
       const careerOptions = await careerOptionsService.getCareerOptionsForUser(user_id);
-      
-      
+
+
       if (careerOptions.length === 0) {
-       
+
         return res.json({
           success: true,
           message: "No career recommendations found. Please complete the career assessment first.",
@@ -409,7 +433,7 @@ class CareerController {
           }
         });
       }
-      
+
       // Format career options with display-friendly data
       const formattedCareerOptions = careerOptions.map(option => ({
         ...option,
@@ -418,7 +442,7 @@ class CareerController {
         skills_display: option.required_skills?.slice(0, 4) || [],
         additional_skills_count: Math.max(0, (option.required_skills?.length || 0) - 4)
       }));
-      
+
       res.json({
         success: true,
         message: "Career recommendations retrieved successfully",
@@ -428,11 +452,11 @@ class CareerController {
           count: careerOptions.length
         }
       });
-      
+
     } catch (error) {
       console.error("❌ Error getting career recommendations:", error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to get career recommendations",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -442,15 +466,16 @@ class CareerController {
   /**
    * Format salary range for display
    */
-  private formatSalary(min: number, max: number, currency: string = 'INR'): string {
-    const formatNumber = (num: number) => {
+  private formatSalary(min: number | null, max: number | null, currency: string | null = 'INR'): string {
+    const formatNumber = (num: number | null) => {
+      if (num === null) return '0';
       if (num >= 10000000) return `${(num / 10000000).toFixed(1)}Cr`;
       if (num >= 100000) return `${(num / 100000).toFixed(1)}L`;
       if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
       return num.toString();
     };
 
-    return `${formatNumber(min)} - ${formatNumber(max)} ${currency}`;
+    return `${formatNumber(min)} - ${formatNumber(max)} ${currency || 'INR'}`;
   }
 
   /**
@@ -465,46 +490,51 @@ class CareerController {
    */
   async generateRoadmap(req: AuthenticatedRequest, res: Response) {
     try {
-      
+
       const { uid } = req.user!;
       const { userId, recommendationId, title } = req.params;
-      
-      
-      
+
+
+
       // Get user_id from users table
       const userRes = await pool.query("SELECT user_id FROM users WHERE uid = $1", [uid]);
       if (userRes.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const user_id = userRes.rows[0].user_id;
-      
+
+      const recId = parseInt(recommendationId);
+      if (isNaN(recId)) {
+        return res.status(400).json({ error: "Invalid recommendation ID" });
+      }
+
       // Verify the user owns this recommendation
       const recCheck = await pool.query(
         "SELECT user_id FROM career_recommendations WHERE recommendation_id = $1",
-        [recommendationId]
+        [recId]
       );
-      
+
       if (recCheck.rows.length === 0) {
         return res.status(404).json({ message: "Recommendation not found" });
       }
-      
+
       if (recCheck.rows[0].user_id !== user_id) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       // Get user's career data for roadmap generation
       const recResult = await pool.query(
         "SELECT * FROM career_recommendations WHERE recommendation_id = $1 AND user_id = $2",
-        [recommendationId, user_id]
+        [recId, user_id]
       );
-      
+
       if (recResult.rows.length === 0) {
         return res.status(404).json({ message: "Career data not found" });
       }
-      
+
       const careerData = recResult.rows[0];
-      
+
       // Convert database data to CareerData format for Gemini
       const userData = {
         name: careerData.name,
@@ -523,15 +553,15 @@ class CareerController {
         interests: careerData.interests,
         preferred_work_env: careerData.preferred_work_env
       };
-      
+
       // Convert AI answers to Q&A format if available
       let allAnswers = [];
       if (careerData.ai_answers) {
         try {
-          const aiAnswers = typeof careerData.ai_answers === 'string' 
-            ? JSON.parse(careerData.ai_answers) 
+          const aiAnswers = typeof careerData.ai_answers === 'string'
+            ? JSON.parse(careerData.ai_answers)
             : careerData.ai_answers;
-          
+
           allAnswers = aiAnswers.map((ans: any) => ({
             question: ans.question,
             answer: ans.answer,
@@ -541,29 +571,29 @@ class CareerController {
           console.error('Error parsing AI answers:', error);
         }
       }
-      
+
       // Decode the career title from URL format, handling special characters
       const careerTitle = title.replace(/-/g, ' ').replace(/_/g, '/').replace(/\b\w/g, l => l.toUpperCase());
-      
-   
+
+
       // Generate roadmap using Gemini service
-      const roadmapData = await geminiService.generateCareerRoadmap(
+      const roadmapData = await aiService.generateCareerRoadmap(
         careerTitle,
         userData,
         allAnswers
       );
-      
+
       // Transform backend format to frontend format
       const transformedRoadmap = this.transformRoadmapForFrontend(roadmapData);
-      
+
       res.json({
         success: true,
         data: transformedRoadmap
       });
-      
+
     } catch (error) {
       console.error("❌ Error generating roadmap:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to generate roadmap",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -600,7 +630,7 @@ class CareerController {
    */
   private generateStepLink(stepName: string, description: string): string {
     const stepLower = stepName.toLowerCase();
-    
+
     // Map step names to relevant learning resources
     if (stepLower.includes('foundation') || stepLower.includes('basic')) {
       return 'https://www.coursera.org/';
@@ -624,7 +654,7 @@ class CareerController {
    */
   private getStepIcon(stepName: string): string {
     const stepLower = stepName.toLowerCase();
-    
+
     if (stepLower.includes('foundation') || stepLower.includes('basic')) {
       return '🏗️';
     } else if (stepLower.includes('skill') || stepLower.includes('learn')) {
